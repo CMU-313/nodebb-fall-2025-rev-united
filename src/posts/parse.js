@@ -142,6 +142,11 @@ module.exports = function (Posts) {
 		plugins.hooks.register('core', {
 			hook: 'filter:parse.post',
 			method: async (data) => {
+				// how do i pull in a json file to get a json file containing a list of bannedWords and run my fun
+
+				//
+				//
+
 				data.postData.content = Posts[data.type !== 'plaintext' ? 'sanitize' : 'sanitizePlaintext'](data.postData.content);
 				return data;
 			},

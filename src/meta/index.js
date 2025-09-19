@@ -22,6 +22,7 @@ Meta.tags = require('./tags');
 Meta.dependencies = require('./dependencies');
 Meta.templates = require('./templates');
 Meta.blacklist = require('./blacklist');
+Meta.bannedwords = require('./bannedwords');
 Meta.languages = require('./languages');
 
 const user = require('../user');
