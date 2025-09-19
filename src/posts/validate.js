@@ -1,15 +1,25 @@
 'use strict';
 
+const meta = require('../meta');
+
+// postData: object with at least 'title' and 'content'
+// returns: object { allowed: boolean, banned: string[] }
 function checkPostDataForBannedContent(postData) {
-	const text = [postData && postData.title, postData && postData.content]
-		.filter(v => typeof v === 'string' && v.trim())
-		.join(' ')
-		.toLowerCase();
+	const bannedWords = meta.bannedwords.getList();
+	const bannedFound = [];
+	const text = `${postData.title || ''} ${postData.content || ''}`.toLowerCase();
 
-	const keywords = ['sensitive'];
-	const hits = keywords.filter(k => text.includes(k.toLowerCase()));
+	for (const word of bannedWords) {
+		const regex = new RegExp(`\\b${word.toLowerCase()}\\b`, 'i');
+		if (regex.test(text)) {
+			bannedFound.push(word);
+		}
+	}
 
-	return hits.length ? { allowed: false, banned: hits } : { allowed: true, banned: [] };
+	return {
+		allowed: (bannedFound.length === 0),
+		banned: bannedFound,
+	};
 }
 
 module.exports = {
