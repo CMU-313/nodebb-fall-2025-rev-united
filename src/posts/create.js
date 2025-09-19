@@ -10,6 +10,7 @@ const groups = require('../groups');
 const privileges = require('../privileges');
 const activitypub = require('../activitypub');
 const utils = require('../utils');
+const { checkPostDataForBannedContent } = require('./validate');
 
 module.exports = function (Posts) {
 	Posts.create = async function (data) {
@@ -25,6 +26,17 @@ module.exports = function (Posts) {
 
 		if (data.toPid) {
 			await checkToPid(data.toPid, uid);
+		}
+
+
+		// Simple keyword flag check — block posting if not allowed
+		const scan = checkPostDataForBannedContent({
+			title: data.title || '',
+			content: content || '',
+		});
+		if (scan && scan.allowed === false) {
+			const bannedList = Array.isArray(scan.banned) ? scan.banned.join(', ') : '';
+			throw new Error(`Your post contains sensitive or banned keywords: ${bannedList}`);
 		}
 
 		const pid = data.pid || await db.incrObjectField('global', 'nextPid');
@@ -64,6 +76,8 @@ module.exports = function (Posts) {
 					postData.content = postData.content.replace(new RegExp(tag.name, 'g'), `<img class="not-responsive emoji" src="${tag.icon.url}" title="${tag.name}" />`);
 				});
 		}
+
+
 
 		({ post: postData } = await plugins.hooks.fire('filter:post.create', { post: postData, data: data }));
 		await db.setObject(`post:${postData.pid}`, postData);
