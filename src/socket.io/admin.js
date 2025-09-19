@@ -29,6 +29,7 @@ SocketAdmin.email = require('./admin/email');
 SocketAdmin.analytics = require('./admin/analytics');
 SocketAdmin.logs = require('./admin/logs');
 SocketAdmin.errors = require('./admin/errors');
+SocketAdmin.bannedwords = require('./admin/bannedwords');
 SocketAdmin.digest = require('./admin/digest');
 SocketAdmin.cache = require('./admin/cache');
 
