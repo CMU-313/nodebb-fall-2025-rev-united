@@ -10,6 +10,8 @@ const groups = require('../groups');
 const privileges = require('../privileges');
 const activitypub = require('../activitypub');
 const utils = require('../utils');
+const websockets = require('../socket.io');
+const { checkPostDataForBannedContent } = require('./validate');
 
 module.exports = function (Posts) {
 	Posts.create = async function (data) {
@@ -63,6 +65,29 @@ module.exports = function (Posts) {
 
 					postData.content = postData.content.replace(new RegExp(tag.name, 'g'), `<img class="not-responsive emoji" src="${tag.icon.url}" title="${tag.name}" />`);
 				});
+		}
+
+		// Simple keyword flag check with banner alert
+		try {
+			const scan = checkPostDataForBannedContent({
+				title: data.title || '',
+				content: content || '',
+			});
+			if (scan && scan.allowed === false) {
+				const bannedList = Array.isArray(scan.banned) ? scan.banned.join(', ') : '';
+				const alertParams = {
+					alert_id: `post_sensitive_${pid}`,
+					title: '[[global:alert.error]]',
+					message: `Your post contains sensitive or banned keywords: ${bannedList}`,
+					type: 'danger',
+					timeout: 7000,
+				};
+				if (utils.isNumber(uid)) {
+					websockets.in(`uid_${uid}`).emit('event:alert', alertParams);
+				}
+			}
+		} catch (e) {
+			// Non-fatal: do not block posting if alert emission fails
 		}
 
 		({ post: postData } = await plugins.hooks.fire('filter:post.create', { post: postData, data: data }));
