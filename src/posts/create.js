@@ -30,18 +30,13 @@ module.exports = function (Posts) {
 
 
 		// Simple keyword flag check — block posting if not allowed
-		try {
-			const scan = checkPostDataForBannedContent({
-				title: data.title || '',
-				content: content || '',
-			});
-			if (scan && scan.allowed === false) {
-				const bannedList = Array.isArray(scan.banned) ? scan.banned.join(', ') : '';
-				throw new Error(`Your post contains sensitive or banned keywords: ${bannedList}`);
-			}
-		} catch (e) {
-			// Re-throw validation errors; do not proceed with create
-			throw e;
+		const scan = checkPostDataForBannedContent({
+			title: data.title || '',
+			content: content || '',
+		});
+		if (scan && scan.allowed === false) {
+			const bannedList = Array.isArray(scan.banned) ? scan.banned.join(', ') : '';
+			throw new Error(`Your post contains sensitive or banned keywords: ${bannedList}`);
 		}
 
 		const pid = data.pid || await db.incrObjectField('global', 'nextPid');
