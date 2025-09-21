@@ -95,4 +95,23 @@ function apiRoutes(router, name, middleware, controllers) {
 	router.post(`/api/${name}/uploadOgImage`, middlewares, helpers.tryRoute(controllers.admin.uploads.uploadOgImage));
 	router.post(`/api/${name}/upload/file`, middlewares, helpers.tryRoute(controllers.admin.uploads.uploadFile));
 	router.post(`/api/${name}/uploadDefaultAvatar`, middlewares, helpers.tryRoute(controllers.admin.uploads.uploadDefaultAvatar));
+
+	router.get(`/api/${name}/banned-words`,
+		middleware.ensureLoggedIn,
+		helpers.tryRoute(controllers.write.admin.getBannedWords));
+
+	router.post(`/api/${name}/banned-words`,
+		middleware.ensureLoggedIn,
+		middleware.checkRequired.bind(null, ['word']),
+		helpers.tryRoute(controllers.write.admin.addBannedWord));
+
+	router.put(`/api/${name}/banned-words`,
+		middleware.ensureLoggedIn,
+		middleware.checkRequired.bind(null, ['oldWord', 'newWord']),
+		helpers.tryRoute(controllers.write.admin.updateBannedWord));
+
+	router.delete(`/api/${name}/banned-words`,
+		middleware.ensureLoggedIn,
+		middleware.checkRequired.bind(null, ['word']),
+		helpers.tryRoute(controllers.write.admin.removeBannedWord));
 }
