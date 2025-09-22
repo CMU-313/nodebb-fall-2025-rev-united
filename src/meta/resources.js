@@ -14,6 +14,7 @@ Resources._resources = [
 	{ name: '313 Syllabus', description: 'Attached is the syllabus for 313 for Fall 2025!', url: 'https://cmu-313.github.io/syllabus/' },
 	{ name: 'Gradescope', description: 'Use this link to submit all assignments!', url: 'https://www.gradescope.com/courses/1086939' },
 	{ name: 'Calendar', description: 'Find the class calendar here!', url: 'https://cmu-313.github.io/#class-calendar' },
+    {name: 'Website', description: 'Find the Webiste linked here', url: 'https://cmu-313.github.io/'}
 ];
 
 // Here we are reloading the cache from DB 
