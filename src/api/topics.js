@@ -84,7 +84,8 @@ topicsAPI.create = async function (caller, data) {
 		});
 		if (scan && scan.allowed === false) {
 			const bannedList = Array.isArray(scan.banned) ? scan.banned.join(', ') : '';
-			throw new Error(`Your post contains sensitive or banned keywords: ${bannedList}`);
+			const escaped = bannedList.replace(/%/g, '&#37;').replace(/,/g, '&#44;');
+			throw new Error(`[[error:post-has-banned-keywords, ${escaped}]]`);
 		}
 	}
 	const shouldQueue = await posts.shouldQueue(caller.uid, payload);
@@ -124,7 +125,8 @@ topicsAPI.reply = async function (caller, data) {
 		});
 		if (scan && scan.allowed === false) {
 			const bannedList = Array.isArray(scan.banned) ? scan.banned.join(', ') : '';
-			throw new Error(`Your post contains sensitive or banned keywords: ${bannedList}`);
+			const escaped = bannedList.replace(/%/g, '&#37;').replace(/,/g, '&#44;');
+			throw new Error(`[[error:post-has-banned-keywords, ${escaped}]]`);
 		}
 	}
 	const shouldQueue = await posts.shouldQueue(caller.uid, payload);
