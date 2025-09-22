@@ -19,6 +19,7 @@ const { doTopicAction } = apiHelpers;
 
 const websockets = require('../socket.io');
 const socketHelpers = require('../socket.io/helpers');
+const { checkPostDataForBannedContent } = require('../posts/validate');
 
 const topicsAPI = module.exports;
 
@@ -74,6 +75,18 @@ topicsAPI.create = async function (caller, data) {
 	}
 
 	await meta.blacklist.test(caller.ip);
+
+	// Banned keyword validation for new topics (title/content)
+	{
+		const scan = checkPostDataForBannedContent({
+			title: data.title || '',
+			content: data.content || '',
+		});
+		if (scan && scan.allowed === false) {
+			const bannedList = Array.isArray(scan.banned) ? scan.banned.join(', ') : '';
+			throw new Error(`Your post contains sensitive or banned keywords: ${bannedList}`);
+		}
+	}
 	const shouldQueue = await posts.shouldQueue(caller.uid, payload);
 	if (shouldQueue) {
 		return await posts.addToQueue(payload);
@@ -102,6 +115,18 @@ topicsAPI.reply = async function (caller, data) {
 	apiHelpers.setDefaultPostData(caller, payload);
 
 	await meta.blacklist.test(caller.ip);
+
+	// Banned keyword validation for replies (content only)
+	{
+		const scan = checkPostDataForBannedContent({
+			title: '',
+			content: data.content || '',
+		});
+		if (scan && scan.allowed === false) {
+			const bannedList = Array.isArray(scan.banned) ? scan.banned.join(', ') : '';
+			throw new Error(`Your post contains sensitive or banned keywords: ${bannedList}`);
+		}
+	}
 	const shouldQueue = await posts.shouldQueue(caller.uid, payload);
 	if (shouldQueue) {
 		return await posts.addToQueue(payload);
