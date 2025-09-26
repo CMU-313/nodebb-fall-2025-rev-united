@@ -61,24 +61,24 @@ define('admin/settings/post', ['api', 'alerts', 'bootbox', 'translator'], functi
 
 	async function refresh() {
 		try {
-		const result = await api.get('/admin/banned-words');
-		let payload = Array.isArray(result) ? result : null;
-		if (payload && payload.words !== undefined) {
-			payload = payload.words;
-		}
-		if (!Array.isArray(payload)) {
-			payload = result?.words;
-		}
-		if (!Array.isArray(payload) && payload && typeof payload === 'object') {
-			payload = Object.values(payload);
-		}
-		if (!Array.isArray(payload)) {
-			payload = [];
-		}
-		state.words = payload
-			.map(word => String(word || '').trim())
-			.filter(Boolean)
-			.sort((a, b) => a.localeCompare(b));
+			const result = await api.get('/admin/banned-words');
+			let payload = Array.isArray(result) ? result : null;
+			if (payload && payload.words !== undefined) {
+				payload = payload.words;
+			}
+			if (!Array.isArray(payload)) {
+				payload = result?.words;
+			}
+			if (!Array.isArray(payload) && payload && typeof payload === 'object') {
+				payload = Object.values(payload);
+			}
+			if (!Array.isArray(payload)) {
+				payload = [];
+			}
+			state.words = payload
+				.map(word => String(word || '').trim())
+				.filter(Boolean)
+				.sort((a, b) => a.localeCompare(b));
 			render();
 		} catch (err) {
 			alerts.error(err);
