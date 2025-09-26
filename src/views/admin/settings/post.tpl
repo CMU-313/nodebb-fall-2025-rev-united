@@ -130,7 +130,7 @@
 						<button class="btn btn-secondary text-nowrap" type="button" data-action="banned-word-add">[[admin/settings/post:banned-words.add]]</button>
 					</div>
 
-					<div class="table-responsive">
+					<div class="table-responsive" data-element="banned-word-table">
 						<table class="table table-sm align-middle mb-0">
 							<thead>
 								<tr>

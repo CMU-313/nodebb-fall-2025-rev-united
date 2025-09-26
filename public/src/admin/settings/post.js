@@ -21,6 +21,7 @@ define('admin/settings/post', ['api', 'alerts', 'bootbox', 'translator'], functi
 		state.inputEl = state.container.querySelector('[data-element="banned-word-input"]');
 		state.listEl = state.container.querySelector('[data-element="banned-word-list"]');
 		state.emptyEl = state.container.querySelector('[data-element="banned-word-empty"]');
+		state.tableWrapper = state.container.querySelector('[data-element="banned-word-table"]');
 
 		bindEvents();
 		refresh();
@@ -62,8 +63,10 @@ define('admin/settings/post', ['api', 'alerts', 'bootbox', 'translator'], functi
 	async function refresh() {
 		try {
 			const result = await api.get('/admin/banned-words');
-			const words = Array.isArray(result && result.response) ? result.response : [];
-			state.words = words.slice().sort((a, b) => a.localeCompare(b));
+			const payload = Array.isArray(result?.response) ? result.response :
+				Array.isArray(result?.response?.words) ? result.response.words :
+				Array.isArray(result?.words) ? result.words : [];
+			state.words = payload.slice().sort((a, b) => a.localeCompare(b));
 			render();
 		} catch (err) {
 			alerts.error(err);
@@ -76,15 +79,17 @@ define('admin/settings/post', ['api', 'alerts', 'bootbox', 'translator'], functi
 		}
 
 		state.listEl.textContent = '';
-		if (!state.words.length) {
-			if (state.emptyEl) {
-				state.emptyEl.hidden = false;
-			}
-			return;
-		}
+		const hasWords = state.words.length > 0;
 
 		if (state.emptyEl) {
-			state.emptyEl.hidden = true;
+			state.emptyEl.hidden = hasWords;
+		}
+		if (state.tableWrapper) {
+			state.tableWrapper.classList.toggle('d-none', !hasWords);
+		}
+
+		if (!hasWords) {
+			return;
 		}
 
 		const fragment = document.createDocumentFragment();
