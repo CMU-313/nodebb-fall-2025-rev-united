@@ -45,4 +45,15 @@ describe('BannedWords Data Layer', () => {
 		const result2 = await BannedWords.containsBannedWords('No banned words here');
 		assert.strictEqual(result2, false);
 	});
+
+	it('should handle words with regex characters', async () => {
+		await BannedWords.add('c++');
+		const matched = await BannedWords.containsBannedWords('I prefer modern C++ code');
+		assert.strictEqual(matched, true);
+		await BannedWords.remove('c++');
+	});
+
+	it('should reject empty words after trimming', async () => {
+		await assert.rejects(BannedWords.add('   '), /invalid-word/);
+	});
 });

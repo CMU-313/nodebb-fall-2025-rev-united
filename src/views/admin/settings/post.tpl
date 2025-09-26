@@ -118,6 +118,32 @@
 						[[admin/settings/post:restrictions.stale-help]]
 					</p>
 				</div>
+
+				<hr class="my-4" />
+
+				<div id="banned-keywords" class="mb-4" component="acp/banned-words">
+					<h6 class="fw-bold tracking-tight mb-3">[[admin/settings/post:banned-words.title]]</h6>
+					<p class="form-text">[[admin/settings/post:banned-words.help]]</p>
+
+					<div class="d-flex flex-column flex-md-row gap-2 align-items-stretch align-items-md-center mb-3">
+						<input type="text" class="form-control" placeholder="[[admin/settings/post:banned-words.placeholder]]" data-element="banned-word-input" autocomplete="off">
+						<button class="btn btn-secondary text-nowrap" type="button" data-action="banned-word-add">[[admin/settings/post:banned-words.add]]</button>
+					</div>
+
+					<div class="table-responsive">
+						<table class="table table-sm align-middle mb-0">
+							<thead>
+								<tr>
+									<th scope="col">[[admin/settings/post:banned-words.table-word]]</th>
+									<th scope="col" class="text-end">[[admin/settings/post:banned-words.table-actions]]</th>
+								</tr>
+							</thead>
+							<tbody data-element="banned-word-list"></tbody>
+						</table>
+					</div>
+
+					<p class="text-muted mb-0 mt-3" data-element="banned-word-empty" hidden>[[admin/settings/post:banned-words.empty]]</p>
+				</div>
 			</div>
 
 			<hr/>

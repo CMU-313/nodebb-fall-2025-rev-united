@@ -10,7 +10,11 @@ function checkPostDataForBannedContent(postData) {
 	const text = `${postData.title || ''} ${postData.content || ''}`.toLowerCase();
 
 	for (const word of bannedWords) {
-		const regex = new RegExp(`\\b${word.toLowerCase()}\\b`, 'i');
+		const escaped = escapeForRegex(word);
+		if (!escaped) {
+			continue;
+		}
+		const regex = new RegExp(`\\b${escaped}\\b`, 'i');
 		if (regex.test(text)) {
 			bannedFound.push(word);
 		}
@@ -25,3 +29,10 @@ function checkPostDataForBannedContent(postData) {
 module.exports = {
 	checkPostDataForBannedContent,
 };
+
+function escapeForRegex(word) {
+	if (!word) {
+		return '';
+	}
+	return word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').toLowerCase();
+}

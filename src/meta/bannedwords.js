@@ -61,6 +61,9 @@ BannedWords.add = async function (word) {
 		throw new Error('[[error:invalid-word]]');
 	}
 	const normalizedWord = word.toLowerCase().trim();
+	if (!normalizedWord) {
+		throw new Error('[[error:invalid-word]]');
+	}
 	await db.setAdd('banned-words', normalizedWord);
 	if (!cache.includes(normalizedWord)) {
 		cache.push(normalizedWord);
