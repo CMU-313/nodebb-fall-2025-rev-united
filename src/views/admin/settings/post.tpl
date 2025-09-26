@@ -127,20 +127,13 @@
 
 					<div class="d-flex flex-column flex-md-row gap-2 align-items-stretch align-items-md-center mb-3">
 						<input type="text" class="form-control" placeholder="[[admin/settings/post:banned-words.placeholder]]" data-element="banned-word-input" autocomplete="off">
-						<button class="btn btn-secondary text-nowrap" type="button" data-action="banned-word-add">[[admin/settings/post:banned-words.add]]</button>
+						<button class="btn btn-primary text-nowrap" type="button" data-action="banned-word-add">
+							<i class="fa fa-plus"></i>
+							<span class="ms-1">[[admin/settings/post:banned-words.add]]</span>
+						</button>
 					</div>
 
-					<div class="table-responsive" data-element="banned-word-table">
-						<table class="table table-sm align-middle mb-0">
-							<thead>
-								<tr>
-									<th scope="col">[[admin/settings/post:banned-words.table-word]]</th>
-									<th scope="col" class="text-end">[[admin/settings/post:banned-words.table-actions]]</th>
-								</tr>
-							</thead>
-							<tbody data-element="banned-word-list"></tbody>
-						</table>
-					</div>
+					<div data-element="banned-word-list" class="list-group"></div>
 
 					<p class="text-muted mb-0 mt-3" data-element="banned-word-empty" hidden>[[admin/settings/post:banned-words.empty]]</p>
 				</div>

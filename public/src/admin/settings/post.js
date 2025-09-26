@@ -21,7 +21,6 @@ define('admin/settings/post', ['api', 'alerts', 'bootbox', 'translator'], functi
 		state.inputEl = state.container.querySelector('[data-element="banned-word-input"]');
 		state.listEl = state.container.querySelector('[data-element="banned-word-list"]');
 		state.emptyEl = state.container.querySelector('[data-element="banned-word-empty"]');
-		state.tableWrapper = state.container.querySelector('[data-element="banned-word-table"]');
 
 		bindEvents();
 		refresh();
@@ -62,11 +61,24 @@ define('admin/settings/post', ['api', 'alerts', 'bootbox', 'translator'], functi
 
 	async function refresh() {
 		try {
-			const result = await api.get('/admin/banned-words');
-			const payload = Array.isArray(result?.response) ? result.response :
-				Array.isArray(result?.response?.words) ? result.response.words :
-				Array.isArray(result?.words) ? result.words : [];
-			state.words = payload.slice().sort((a, b) => a.localeCompare(b));
+		const result = await api.get('/admin/banned-words');
+		let payload = Array.isArray(result) ? result : null;
+		if (payload && payload.words !== undefined) {
+			payload = payload.words;
+		}
+		if (!Array.isArray(payload)) {
+			payload = result?.words;
+		}
+		if (!Array.isArray(payload) && payload && typeof payload === 'object') {
+			payload = Object.values(payload);
+		}
+		if (!Array.isArray(payload)) {
+			payload = [];
+		}
+		state.words = payload
+			.map(word => String(word || '').trim())
+			.filter(Boolean)
+			.sort((a, b) => a.localeCompare(b));
 			render();
 		} catch (err) {
 			alerts.error(err);
@@ -84,9 +96,7 @@ define('admin/settings/post', ['api', 'alerts', 'bootbox', 'translator'], functi
 		if (state.emptyEl) {
 			state.emptyEl.hidden = hasWords;
 		}
-		if (state.tableWrapper) {
-			state.tableWrapper.classList.toggle('d-none', !hasWords);
-		}
+		state.listEl.classList.toggle('d-none', !hasWords);
 
 		if (!hasWords) {
 			return;
@@ -94,15 +104,14 @@ define('admin/settings/post', ['api', 'alerts', 'bootbox', 'translator'], functi
 
 		const fragment = document.createDocumentFragment();
 		state.words.forEach((word) => {
-			const row = document.createElement('tr');
-			row.dataset.word = word;
+			const item = document.createElement('div');
+			item.className = 'list-group-item d-flex flex-column flex-md-row align-items-start align-items-md-center gap-3 justify-content-between';
+			item.dataset.word = word;
 
-			const wordCell = document.createElement('td');
-			wordCell.textContent = word;
-			row.appendChild(wordCell);
-
-			const actionsCell = document.createElement('td');
-			actionsCell.classList.add('text-end');
+			const wordWrapper = document.createElement('div');
+			wordWrapper.className = 'text-break fw-medium';
+			wordWrapper.textContent = word;
+			item.appendChild(wordWrapper);
 
 			const btnGroup = document.createElement('div');
 			btnGroup.className = 'btn-group btn-group-sm';
@@ -110,7 +119,7 @@ define('admin/settings/post', ['api', 'alerts', 'bootbox', 'translator'], functi
 
 			const editBtn = document.createElement('button');
 			editBtn.type = 'button';
-			editBtn.className = 'btn btn-light';
+			editBtn.className = 'btn btn-outline-primary';
 			editBtn.dataset.action = 'banned-word-edit';
 			editBtn.dataset.word = word;
 			editBtn.innerHTML = '<i class="fa fa-pencil-alt"></i>';
@@ -119,17 +128,15 @@ define('admin/settings/post', ['api', 'alerts', 'bootbox', 'translator'], functi
 
 			const deleteBtn = document.createElement('button');
 			deleteBtn.type = 'button';
-			deleteBtn.className = 'btn btn-light';
+			deleteBtn.className = 'btn btn-outline-danger';
 			deleteBtn.dataset.action = 'banned-word-delete';
 			deleteBtn.dataset.word = word;
 			deleteBtn.innerHTML = '<i class="fa fa-trash"></i>';
 			translateAttr(deleteBtn, '[[admin/settings/post:banned-words.delete]]');
 			btnGroup.appendChild(deleteBtn);
 
-			actionsCell.appendChild(btnGroup);
-			row.appendChild(actionsCell);
-
-			fragment.appendChild(row);
+			item.appendChild(btnGroup);
+			fragment.appendChild(item);
 		});
 
 		state.listEl.appendChild(fragment);
