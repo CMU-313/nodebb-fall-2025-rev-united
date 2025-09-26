@@ -783,8 +783,11 @@ describe('Post\'s', () => {
 		let validate;
 		
 		before(async () => {
-			// Import the validate module
 			validate = require('../src/posts/validate');
+			
+			// Initialize banned words for tests
+			const bannedWords = require('../src/meta/bannedwords');
+			await bannedWords.init();
 		});
 
 		describe('checkPostDataForBannedContent', () => {
@@ -874,7 +877,7 @@ describe('Post\'s', () => {
 					});
 					assert(false, 'Expected post creation to fail');
 				} catch (err) {
-					assert(err.message.includes('Your post contains sensitive or banned keywords'));
+					assert(err.message.includes('post-has-banned-keywords'));
 					assert(err.message.includes('spam'));
 				}
 			});
@@ -888,7 +891,7 @@ describe('Post\'s', () => {
 					});
 					assert(false, 'Expected post creation to fail');
 				} catch (err) {
-					assert(err.message.includes('Your post contains sensitive or banned keywords'));
+					assert(err.message.includes('post-has-banned-keywords'));
 					assert(err.message.includes('hate'));
 				}
 			});
@@ -901,7 +904,7 @@ describe('Post\'s', () => {
 					});
 					assert(false, 'Expected reply creation to fail');
 				} catch (err) {
-					assert(err.message.includes('Your post contains sensitive or banned keywords'));
+					assert(err.message.includes('post-has-banned-keywords'));
 					assert(err.message.includes('abuse'));
 				}
 			});
@@ -920,7 +923,7 @@ describe('Post\'s', () => {
 					});
 					assert(false, 'Expected post creation to fail');
 				} catch (err) {
-					assert(err.message.includes('Your post contains sensitive or banned keywords'));
+					assert(err.message.includes('post-has-banned-keywords'));
 					assert(err.message.includes('spam'));
 					
 					// Verify no topic or post was actually created
