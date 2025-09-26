@@ -82,3 +82,23 @@ Admin.chats.deleteRoom = async (req, res) => {
 Admin.listGroups = async (req, res) => {
 	helpers.formatApiResponse(200, res, await api.admin.listGroups());
 };
+
+Admin.getBannedWords = async (req, res) => {
+	const words = await api.admin.getBannedWords(req);
+	helpers.formatApiResponse(200, res, words);
+};
+
+Admin.addBannedWord = async (req, res) => {
+	await api.admin.addBannedWord(req, req.body);
+	helpers.formatApiResponse(200, res);
+};
+
+Admin.updateBannedWord = async (req, res) => {
+	await api.admin.updateBannedWord(req, req.body);
+	helpers.formatApiResponse(200, res);
+};
+
+Admin.removeBannedWord = async (req, res) => {
+	await api.admin.removeBannedWord(req, req.body);
+	helpers.formatApiResponse(200, res);
+};

@@ -7,6 +7,7 @@ const groups = require('../groups');
 
 const adminApi = module.exports;
 
+// Settings
 adminApi.updateSetting = async (caller, { setting, value }) => {
 	const ok = await privileges.admin.can('admin:settings', caller.uid);
 	if (!ok) {
@@ -42,4 +43,44 @@ adminApi.listGroups = async () => {
 
 	const payload = await groups.getNonPrivilegeGroups('groups:createtime', 0, -1, { ephemeral: false });
 	return { groups: payload };
+};
+
+// Banned Words
+const bannedWords = require('../meta/bannedwords');
+
+adminApi.getBannedWords = async function (caller) {
+	if (!await privileges.admin.can('admin:settings', caller.uid)) {
+		throw new Error('[[error:no-privileges]]');
+	}
+	return await bannedWords.getAll();
+};
+
+adminApi.addBannedWord = async function (caller, data) {
+	if (!await privileges.admin.can('admin:settings', caller.uid)) {
+		throw new Error('[[error:no-privileges]]');
+	}
+	if (!data.word) {
+		throw new Error('[[error:invalid-data]]');
+	}
+	await bannedWords.add(data.word);
+};
+
+adminApi.removeBannedWord = async function (caller, data) {
+	if (!await privileges.admin.can('admin:settings', caller.uid)) {
+		throw new Error('[[error:no-privileges]]');
+	}
+	if (!data.word) {
+		throw new Error('[[error:invalid-data]]');
+	}
+	await bannedWords.remove(data.word);
+};
+
+adminApi.updateBannedWord = async function (caller, data) {
+	if (!await privileges.admin.can('admin:settings', caller.uid)) {
+		throw new Error('[[error:no-privileges]]');
+	}
+	if (!data.oldWord || !data.newWord) {
+		throw new Error('[[error:invalid-data]]');
+	}
+	await bannedWords.update(data.oldWord, data.newWord);
 };
