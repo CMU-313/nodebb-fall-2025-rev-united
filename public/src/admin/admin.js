@@ -46,6 +46,7 @@ app.onDomReady();
 			setupRestartLinks();
 			showCorrectNavTab();
 			startLogoutTimer();
+			loadContextualModule(data);
 
 			$('[data-bs-toggle="tooltip"]').tooltip({
 				animation: false,
@@ -126,6 +127,22 @@ app.onDomReady();
 				NProgress.done();
 			});
 		});
+	}
+
+	function loadContextualModule(data) {
+		if (!data || !data.tpl_url) {
+			return;
+		}
+
+		switch (data.tpl_url) {
+			case 'admin/settings/post':
+				require(['admin/settings/post'], function (postSettings) {
+					if (postSettings && typeof postSettings.init === 'function') {
+						postSettings.init();
+					}
+				});
+				break;
+		}
 	}
 
 	function updatePageTitle(url) {
