@@ -51,7 +51,7 @@ describe('Resources Data Layer', () => {
 	it('should remove a resource', async () => {
 		const r = await ResourcesPage.add({
 			name: 'Test Resources',
-			url: 'https://cmu-313.github.io/#class-calendar',
+			url: 'https://cmu-313.github.io',
 		});
 		await ResourcesPage.remove(r.id);
 		const resources = await ResourcesPage.getAll();
