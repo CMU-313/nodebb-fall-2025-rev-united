@@ -113,6 +113,8 @@ async function initializeNodeBB() {
 	await routes(app, middleware);
 	await privileges.init();
 	await meta.blacklist.load();
+	// init banned words
+	await require('./meta/bannedwords').init();
 	await flags.init();
 	await analytics.init();
 	await errors.init();

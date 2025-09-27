@@ -779,6 +779,181 @@ describe('Post\'s', () => {
 		});
 	});
 
+	describe('content validation', () => {
+		let validate;
+		
+		before(async () => {
+			validate = require('../src/posts/validate');
+			
+			// Initialize banned words for tests
+			const bannedWords = require('../src/meta/bannedwords');
+			await bannedWords.init();
+		});
+
+		describe('checkPostDataForBannedContent', () => {
+			it('should allow post when no banned words are present', () => {
+				const postData = {
+					title: 'Clean title',
+					content: 'This is clean content',
+				};
+				
+				const result = validate.checkPostDataForBannedContent(postData);
+				assert.strictEqual(result.allowed, true);
+				assert.deepStrictEqual(result.banned, []);
+			});
+
+			it('should block post when banned words are present in content', () => {
+				const postData = {
+					title: 'Clean title',
+					content: 'This contains spam content',
+				};
+				
+				const result = validate.checkPostDataForBannedContent(postData);
+				assert.strictEqual(result.allowed, false);
+				assert.deepStrictEqual(result.banned, ['spam']);
+			});
+
+			it('should block post when banned words are present in title', () => {
+				const postData = {
+					title: 'This title contains hate speech',
+					content: 'Clean content',
+				};
+				
+				const result = validate.checkPostDataForBannedContent(postData);
+				assert.strictEqual(result.allowed, false);
+				assert.deepStrictEqual(result.banned, ['hate']);
+			});
+
+			it('should handle case insensitive matching', () => {
+				const postData = {
+					title: 'Clean title',
+					content: 'This contains SPAM content',
+				};
+				
+				const result = validate.checkPostDataForBannedContent(postData);
+				assert.strictEqual(result.allowed, false);
+				assert.deepStrictEqual(result.banned, ['spam']);
+			});
+
+			it('should handle posts with only title', () => {
+				const postData = {
+					title: 'Clean title',
+				};
+				
+				const result = validate.checkPostDataForBannedContent(postData);
+				assert.strictEqual(result.allowed, true);
+				assert.deepStrictEqual(result.banned, []);
+			});
+
+			it('should handle posts with only content', () => {
+				const postData = {
+					content: 'Clean content',
+				};
+				
+				const result = validate.checkPostDataForBannedContent(postData);
+				assert.strictEqual(result.allowed, true);
+				assert.deepStrictEqual(result.banned, []);
+			});
+
+			it('should return multiple banned words when present', () => {
+				const postData = {
+					title: 'Clean title',
+					content: 'This contains spam and abuse content',
+				};
+				
+				const result = validate.checkPostDataForBannedContent(postData);
+				assert.strictEqual(result.allowed, false);
+				assert.deepStrictEqual(result.banned.sort(), ['spam', 'abuse'].sort());
+			});
+		});
+
+		describe('post creation with banned content', () => {
+			it('should prevent topic creation when title contains banned words', async () => {
+				try {
+					await apiTopics.create({ uid: voterUid }, {
+						cid: cid,
+						title: 'This topic contains spam',
+						content: 'Clean content',
+					});
+					assert(false, 'Expected post creation to fail');
+				} catch (err) {
+					assert(err.message.includes('post-has-banned-keywords'));
+					assert(err.message.includes('spam'));
+				}
+			});
+
+			it('should prevent topic creation when content contains banned words', async () => {
+				try {
+					await apiTopics.create({ uid: voterUid }, {
+						cid: cid,
+						title: 'Clean title',
+						content: 'This content contains hate speech',
+					});
+					assert(false, 'Expected post creation to fail');
+				} catch (err) {
+					assert(err.message.includes('post-has-banned-keywords'));
+					assert(err.message.includes('hate'));
+				}
+			});
+
+			it('should prevent reply creation when content contains banned words', async () => {
+				try {
+					await apiTopics.reply({ uid: voterUid }, {
+						tid: topicData.tid,
+						content: 'This reply contains abuse',
+					});
+					assert(false, 'Expected reply creation to fail');
+				} catch (err) {
+					assert(err.message.includes('post-has-banned-keywords'));
+					assert(err.message.includes('abuse'));
+				}
+			});
+
+			it('should not create any post data when banned content is detected', async () => {
+				// Get the total counts before the attempt
+				const topicCountBefore = await db.getObjectField('global', 'topicCount') || 0;
+				const postCountBefore = await db.getObjectField('global', 'postCount') || 0;
+				const nextTidBefore = await db.getObjectField('global', 'nextTid');
+				
+				try {
+					await apiTopics.create({ uid: voterUid }, {
+						cid: cid,
+						title: 'Clean title',
+						content: 'This contains spam content',
+					});
+					assert(false, 'Expected post creation to fail');
+				} catch (err) {
+					assert(err.message.includes('post-has-banned-keywords'));
+					assert(err.message.includes('spam'));
+					
+					// Verify no topic or post was actually created
+					const topicCountAfter = await db.getObjectField('global', 'topicCount') || 0;
+					const postCountAfter = await db.getObjectField('global', 'postCount') || 0;
+					const nextTidAfter = await db.getObjectField('global', 'nextTid');
+					
+					assert.strictEqual(topicCountAfter, topicCountBefore, 'Topic count should not increase for failed posts');
+					assert.strictEqual(postCountAfter, postCountBefore, 'Post count should not increase for failed posts');
+					assert.strictEqual(nextTidAfter, nextTidBefore, 'TID counter should not be incremented for failed posts');
+				}
+			});
+
+			it('should allow post creation when no banned words are present', async () => {
+				const result = await topics.post({
+					uid: voterUid,
+					cid: cid,
+					title: 'Clean topic title',
+					content: 'This is completely clean content',
+				});
+				
+				assert(result);
+				assert(result.topicData);
+				assert(result.postData);
+				
+				await topics.purge(result.topicData.tid, voterUid);
+			});
+		});
+	});
+
 	describe('socket methods', () => {
 		let pid;
 		before((done) => {
@@ -1273,4 +1448,6 @@ describe('Posts\'', async () => {
 			require(filePath);
 		});
 	});
+
+
 });

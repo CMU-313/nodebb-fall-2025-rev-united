@@ -25,5 +25,10 @@ module.exports = function () {
 
 	setupApiRoute(router, 'get', '/groups', [...middlewares], controllers.write.admin.listGroups);
 
+	setupApiRoute(router, 'get', '/banned-words', [...middlewares], controllers.write.admin.getBannedWords);
+	setupApiRoute(router, 'post', '/banned-words', [...middlewares, middleware.checkRequired.bind(null, ['word'])], controllers.write.admin.addBannedWord);
+	setupApiRoute(router, 'put', '/banned-words', [...middlewares, middleware.checkRequired.bind(null, ['oldWord', 'newWord'])], controllers.write.admin.updateBannedWord);
+	setupApiRoute(router, 'delete', '/banned-words', [...middlewares, middleware.checkRequired.bind(null, ['word'])], controllers.write.admin.removeBannedWord);
+
 	return router;
 };

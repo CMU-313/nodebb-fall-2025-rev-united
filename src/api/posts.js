@@ -19,6 +19,7 @@ const websockets = require('../socket.io');
 const socketHelpers = require('../socket.io/helpers');
 const translator = require('../translator');
 const notifications = require('../notifications');
+const { checkPostDataForBannedContent } = require('../posts/validate');
 
 const postsAPI = module.exports;
 
@@ -113,6 +114,19 @@ postsAPI.edit = async function (caller, data) {
 		throw new Error(`[[error:title-too-long, ${meta.config.maximumTitleLength}]]`);
 	} else if (!await posts.canUserPostContentWithLinks(caller.uid, data.content)) {
 		throw new Error(`[[error:not-enough-reputation-to-post-links, ${meta.config['min:rep:post-links']}]]`);
+	}
+
+	// Banned keyword validation during edit (local posts only)
+	if (utils.isNumber(data.pid)) {
+		const scan = checkPostDataForBannedContent({
+			title: data.title || '',
+			content: data.content || '',
+		});
+		if (scan && scan.allowed === false) {
+			const bannedList = Array.isArray(scan.banned) ? scan.banned.join(', ') : '';
+			const escaped = bannedList.replace(/%/g, '&#37;').replace(/,/g, '&#44;');
+			throw new Error(`[[error:post-has-banned-keywords, ${escaped}]]`);
+		}
 	}
 
 	data.uid = caller.uid;
