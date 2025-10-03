@@ -28,7 +28,15 @@ module.exports = function (Posts) {
 		}
 
 		if (data.linkedThreadIds) {
-			await checkLinkedThreadIds(data.linkedThreadIds, uid);
+			// Filter out duplicates and current topic ID
+			if (Array.isArray(data.linkedThreadIds)) {
+				const uniqueIds = [...new Set(data.linkedThreadIds)];
+				data.linkedThreadIds = uniqueIds.filter(id => parseInt(id, 10) !== parseInt(tid, 10));
+			}
+
+			if (data.linkedThreadIds.length > 0) {
+				await checkLinkedThreadIds(data.linkedThreadIds, uid);
+			}
 		}
 
 		const pid = data.pid || await db.incrObjectField('global', 'nextPid');
@@ -138,17 +146,24 @@ module.exports = function (Posts) {
 		}
 
 		// Check existence and permissions for all thread IDs
-		const [threadsExist, canViewThreads] = await Promise.all([
-			topics.exists(linkedThreadIds),
-			Promise.all(linkedThreadIds.map(threadId => privileges.topics.can('topics:read', threadId, uid))),
-		]);
-
-		// Check if any threads don't exist
+		const threadsExist = await topics.exists(linkedThreadIds);
+		
+		// Check if any threads don't exist first
 		const existsArray = Array.isArray(threadsExist) ? threadsExist : [threadsExist];
+		const nonExistent = [];
 		for (let i = 0; i < linkedThreadIds.length; i++) {
 			if (!existsArray[i]) {
-				throw new Error('[[error:no-topic]]');
+				nonExistent.push(linkedThreadIds[i]);
 			}
+		}
+
+		if (nonExistent.length > 0) {
+			throw new Error(`[[error:linked-threads-not-found, ${nonExistent.join(', ')}]]`);
+		}
+
+		// Only check permissions for existing threads
+		const canViewThreads = await Promise.all(linkedThreadIds.map(threadId => privileges.topics.can('topics:read', threadId, uid)));
+		for (let i = 0; i < linkedThreadIds.length; i++) {
 			if (!canViewThreads[i]) {
 				throw new Error('[[error:no-privileges]]');
 			}
