@@ -70,5 +70,8 @@ function modifyPost(post, fields) {
 		if (!fields.length || fields.includes('attachments')) {
 			post.attachments = (post.attachments || '').split(',').filter(Boolean);
 		}
+		if (!fields.length || fields.includes('linkedThreadIds')) {
+			post.linkedThreadIds = (post.linkedThreadIds || '').split(',').filter(Boolean).map(id => parseInt(id, 10));
+		}
 	}
 }

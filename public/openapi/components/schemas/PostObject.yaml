@@ -342,6 +342,11 @@ PostDataObject:
               type: number
             hasSingleImmediateReply:
               type: boolean
+        linkedThreadIds:
+          type: array
+          items:
+            type: number
+          description: Array of topic IDs that this post is linked to for cross-referencing
         selfPost:
           type: boolean
         events:

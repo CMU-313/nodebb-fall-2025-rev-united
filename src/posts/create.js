@@ -27,11 +27,19 @@ module.exports = function (Posts) {
 			await checkToPid(data.toPid, uid);
 		}
 
+		if (data.linkedThreadIds) {
+			await checkLinkedThreadIds(data.linkedThreadIds, uid);
+		}
+
 		const pid = data.pid || await db.incrObjectField('global', 'nextPid');
 		let postData = { pid, uid, tid, content, sourceContent, timestamp };
 
 		if (data.toPid) {
 			postData.toPid = data.toPid;
+		}
+		if (data.linkedThreadIds && Array.isArray(data.linkedThreadIds)) {
+			// Convert array to comma-separated string for storage
+			postData.linkedThreadIds = data.linkedThreadIds.join(',');
 		}
 		if (data.ip && meta.config.trackIpPerPost) {
 			postData.ip = data.ip;
@@ -110,6 +118,40 @@ module.exports = function (Posts) {
 		const toPidExists = !!toPost.pid;
 		if (!toPidExists || (toPost.deleted && !canViewToPid)) {
 			throw new Error('[[error:invalid-pid]]');
+		}
+	}
+
+	async function checkLinkedThreadIds(linkedThreadIds, uid) {
+		if (!Array.isArray(linkedThreadIds)) {
+			throw new Error('[[error:invalid-data]]');
+		}
+
+		if (linkedThreadIds.length === 0) {
+			return; // Empty array is valid
+		}
+
+		// Validate each thread ID is a number
+		for (const threadId of linkedThreadIds) {
+			if (!utils.isNumber(threadId)) {
+				throw new Error('[[error:invalid-thread-id]]');
+			}
+		}
+
+		// Check existence and permissions for all thread IDs
+		const [threadsExist, canViewThreads] = await Promise.all([
+			topics.exists(linkedThreadIds),
+			Promise.all(linkedThreadIds.map(threadId => privileges.topics.can('topics:read', threadId, uid))),
+		]);
+
+		// Check if any threads don't exist
+		const existsArray = Array.isArray(threadsExist) ? threadsExist : [threadsExist];
+		for (let i = 0; i < linkedThreadIds.length; i++) {
+			if (!existsArray[i]) {
+				throw new Error('[[error:no-topic]]');
+			}
+			if (!canViewThreads[i]) {
+				throw new Error('[[error:no-privileges]]');
+			}
 		}
 	}
 };

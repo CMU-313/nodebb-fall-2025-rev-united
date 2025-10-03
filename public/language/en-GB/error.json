@@ -14,6 +14,7 @@
 	"invalid-pid": "Invalid Post ID",
 	"invalid-uid": "Invalid User ID",
 	"invalid-mid": "Invalid Chat Message ID",
+	"invalid-thread-id": "Invalid Thread ID",
 	"invalid-date": "A valid date must be provided",
 
 	"invalid-username": "Invalid Username",
