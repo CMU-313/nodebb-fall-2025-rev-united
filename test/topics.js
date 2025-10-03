@@ -376,6 +376,172 @@ describe('Topic\'s', () => {
 		});
 	});
 
+	describe('linkedThreadIds', () => {
+		let testTopic1;
+		let testTopic2;
+		let testTopic3;
+
+		before(async () => {
+			// Create test topics to link to
+			const result1 = await topics.post({
+				uid: topic.userId,
+				title: 'Linked Topic 1',
+				content: 'This is linked topic 1',
+				cid: topic.categoryId,
+			});
+			testTopic1 = result1.topicData;
+
+			const result2 = await topics.post({
+				uid: topic.userId,
+				title: 'Linked Topic 2',
+				content: 'This is linked topic 2',
+				cid: topic.categoryId,
+			});
+			testTopic2 = result2.topicData;
+
+			const result3 = await topics.post({
+				uid: topic.userId,
+				title: 'Main Topic for Linking',
+				content: 'This topic will have replies with linked threads',
+				cid: topic.categoryId,
+			});
+			testTopic3 = result3.topicData;
+		});
+
+		it('should create a reply with valid linkedThreadIds', async () => {
+			const result = await topics.reply({
+				uid: topic.userId,
+				content: 'test post with linked threads',
+				tid: testTopic3.tid,
+				linkedThreadIds: [testTopic1.tid, testTopic2.tid],
+			});
+
+			assert.ok(result);
+			assert.ok(result.pid);
+
+			// Verify the post was created with linkedThreadIds
+			const postData = await posts.getPostData(result.pid);
+			assert.ok(postData.linkedThreadIds);
+			assert.ok(Array.isArray(postData.linkedThreadIds));
+			assert.strictEqual(postData.linkedThreadIds.length, 2);
+			assert.ok(postData.linkedThreadIds.includes(testTopic1.tid));
+			assert.ok(postData.linkedThreadIds.includes(testTopic2.tid));
+		});
+
+		it('should create a reply with a single linkedThreadId', async () => {
+			const result = await topics.reply({
+				uid: topic.userId,
+				content: 'test post with single linked thread',
+				tid: testTopic3.tid,
+				linkedThreadIds: [testTopic1.tid],
+			});
+
+			assert.ok(result);
+			const postData = await posts.getPostData(result.pid);
+			assert.ok(postData.linkedThreadIds);
+			assert.strictEqual(postData.linkedThreadIds.length, 1);
+			assert.strictEqual(postData.linkedThreadIds[0], testTopic1.tid);
+		});
+
+		it('should create a reply without linkedThreadIds', async () => {
+			const result = await topics.reply({
+				uid: topic.userId,
+				content: 'test post without linked threads',
+				tid: testTopic3.tid,
+			});
+
+			assert.ok(result);
+			const postData = await posts.getPostData(result.pid);
+			assert.ok(Array.isArray(postData.linkedThreadIds));
+			assert.strictEqual(postData.linkedThreadIds.length, 0);
+		});
+
+		it('should filter out current topic from linkedThreadIds', async () => {
+			const result = await topics.reply({
+				uid: topic.userId,
+				content: 'test post with self-reference',
+				tid: testTopic3.tid,
+				linkedThreadIds: [testTopic1.tid, testTopic3.tid, testTopic2.tid], // includes current topic
+			});
+
+			assert.ok(result);
+			const postData = await posts.getPostData(result.pid);
+			assert.ok(postData.linkedThreadIds);
+			assert.strictEqual(postData.linkedThreadIds.length, 2);
+			assert.ok(postData.linkedThreadIds.includes(testTopic1.tid));
+			assert.ok(postData.linkedThreadIds.includes(testTopic2.tid));
+			assert.ok(!postData.linkedThreadIds.includes(testTopic3.tid)); // should not include self
+		});
+
+		it('should remove duplicate linkedThreadIds', async () => {
+			const result = await topics.reply({
+				uid: topic.userId,
+				content: 'test post with duplicate links',
+				tid: testTopic3.tid,
+				linkedThreadIds: [testTopic1.tid, testTopic2.tid, testTopic1.tid], // duplicate
+			});
+
+			assert.ok(result);
+			const postData = await posts.getPostData(result.pid);
+			assert.ok(postData.linkedThreadIds);
+			assert.strictEqual(postData.linkedThreadIds.length, 2);
+			assert.ok(postData.linkedThreadIds.includes(testTopic1.tid));
+			assert.ok(postData.linkedThreadIds.includes(testTopic2.tid));
+		});
+
+		it('should fail with non-existent linkedThreadIds', async () => {
+			await assert.rejects(
+				topics.reply({
+					uid: topic.userId,
+					content: 'test post with invalid linked thread',
+					tid: testTopic3.tid,
+					linkedThreadIds: [99999], // non-existent topic ID
+				}),
+				{ message: '[[error:linked-threads-not-found, 99999]]' }
+			);
+		});
+
+		it('should handle empty linkedThreadIds array', async () => {
+			const result = await topics.reply({
+				uid: topic.userId,
+				content: 'test post with empty linked threads array',
+				tid: testTopic3.tid,
+				linkedThreadIds: [],
+			});
+
+			assert.ok(result);
+			const postData = await posts.getPostData(result.pid);
+			assert.ok(Array.isArray(postData.linkedThreadIds));
+			assert.strictEqual(postData.linkedThreadIds.length, 0);
+		});
+
+		it('should work with API endpoint', async () => {
+			const response = await helpers.request('post', `/api/v3/topics/${testTopic3.tid}`, {
+				jar: adminJar,
+				headers: {
+					'x-csrf-token': csrf_token,
+				},
+				body: {
+					content: 'API test post with linked threads',
+					linkedThreadIds: [testTopic1.tid, testTopic2.tid],
+				},
+			});
+
+			assert.ok(response, 'Response should exist');
+			assert.ok(response.body, 'Response body should exist');
+			assert.strictEqual(response.body.status.code, 'ok');
+			assert.ok(response.body.response);
+			assert.ok(response.body.response.pid);
+
+			// Verify the post was created correctly via API
+			const postData = await posts.getPostData(response.body.response.pid);
+			assert.ok(postData.linkedThreadIds);
+			assert.strictEqual(postData.linkedThreadIds.length, 2);
+			assert.ok(postData.linkedThreadIds.includes(testTopic1.tid));
+			assert.ok(postData.linkedThreadIds.includes(testTopic2.tid));
+		});
+	});
+
 	describe('Get methods', () => {
 		let newTopic;
 		let newPost;
