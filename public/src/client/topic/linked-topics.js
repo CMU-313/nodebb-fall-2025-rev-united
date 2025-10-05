@@ -30,23 +30,38 @@ define('forum/topic/linked-topics', ['hooks'], function (hooks) {
 		}
 
 		// Check if already rendered
-		if (contentEl.find('.linked-topics-container').length > 0) {
+		if (contentEl.attr('data-linked-topics-rendered') === 'true') {
 			return;
 		}
 
-		// Create linked topics display
-		const linkedTopicsHtml = post.linkedTopics.map(function (topic) {
-			const slug = topic.slug || '';
-			const url = config.relative_path + '/topic/' + topic.tid + (slug ? '/' + slug : '');
-			return '<a href="' + url + '" class="linked-topic-tag" target="_blank" rel="noopener">#' +
-				$('<div>').text(topic.title).html() + '</a>';
-		}).join(' ');
+		// Create a map of slugified titles to topic data
+		const topicMap = {};
+		post.linkedTopics.forEach(function (topic) {
+			const slugifiedTitle = topic.title.replace(/\s+/g, '-');
+			topicMap[slugifiedTitle] = topic;
+		});
 
-		const container = $('<div class="linked-topics-container" style="margin-top: 10px; padding: 8px; background: #f5f5f5; border-radius: 4px;">' +
-			'<small><i class="fa fa-link"></i> <strong>Linked Topics:</strong> ' + linkedTopicsHtml + '</small>' +
-			'</div>');
+		// Get the HTML content
+		let html = contentEl.html();
 
-		contentEl.append(container);
+		// Replace hashtags with clickable links
+		// Match #word-word patterns (hashtags)
+		const hashtagPattern = /#([\w-]+)/g;
+		html = html.replace(hashtagPattern, function (match, hashtag) {
+			const topic = topicMap[hashtag];
+			if (topic) {
+				const slug = topic.slug || '';
+				const url = config.relative_path + '/topic/' + topic.tid + (slug ? '/' + slug : '');
+				const escapedTitle = $('<div>').text(topic.title).html();
+				return '<a href="' + url + '" class="linked-topic-hashtag" target="_blank" rel="noopener" ' +
+					'style="color: #0066cc; text-decoration: none; font-weight: 500;" ' +
+					'title="' + escapedTitle + '">#' + hashtag + '</a>';
+			}
+			return match; // Return unchanged if no matching topic
+		});
+
+		contentEl.html(html);
+		contentEl.attr('data-linked-topics-rendered', 'true');
 	}
 
 	return LinkedTopics;
