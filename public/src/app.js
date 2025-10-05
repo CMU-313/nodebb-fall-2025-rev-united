@@ -109,12 +109,14 @@ if (document.readyState === 'loading') {
 			'search',
 			'forum/header',
 			'hooks',
-		], function (taskbar, helpers, pagination, messages, search, header, hooks) {
+			'composer/topic-link',
+		], function (taskbar, helpers, pagination, messages, search, header, hooks, topicLink) {
 			header.prepareDOM();
 			taskbar.init();
 			helpers.register();
 			pagination.init();
 			search.init();
+			topicLink.init();
 			overrides.overrideTimeago();
 			hooks.fire('action:app.load');
 			messages.show();
