@@ -113,4 +113,48 @@ module.exports = function (SocketTopics) {
 		const tags = await topics.getCategoryTagsData(cids, start, stop);
 		return { tags: tags.filter(Boolean), nextStart: stop + 1 };
 	};
+
+	SocketTopics.searchTopicsForLink = async function (socket, data) {
+		if (!data || typeof data.query !== 'string') {
+			throw new Error('[[error:invalid-data]]');
+		}
+
+		const allowed = await privileges.global.can('search:content', socket.uid);
+		if (!allowed) {
+			throw new Error('[[error:no-privileges]]');
+		}
+
+		const query = data.query.trim();
+		if (query.length < 1) {
+			return [];
+		}
+
+		// Get categories user can read
+		const cids = await categories.getCidsByPrivilege('categories:cid', socket.uid, 'topics:read');
+
+		// Use getSortedSetRevRange to get recent topics
+		const tids = await require('../../database').getSortedSetRevRange('topics:recent', 0, 49);
+
+		// Filter topics by title match and user permissions
+		const [topicData, canReadArray] = await Promise.all([
+			topics.getTopicsFields(tids, ['tid', 'title', 'cid', 'deleted']),
+			Promise.all(tids.map(tid => privileges.topics.can('topics:read', tid, socket.uid))),
+		]);
+
+		const lowerQuery = query.toLowerCase();
+		const results = topicData
+			.map((topic, index) => ({ ...topic, canRead: canReadArray[index] }))
+			.filter(topic =>
+				topic.canRead &&
+				!topic.deleted &&
+				topic.title.toLowerCase().includes(lowerQuery)
+			)
+			.slice(0, 10)
+			.map(topic => ({
+				tid: topic.tid,
+				title: topic.title,
+			}));
+
+		return results;
+	};
 };
