@@ -11,7 +11,7 @@ define('forum/topic/linked-topics', ['hooks'], function (hooks) {
 			}
 
 			data.posts.forEach(function (post) {
-				console.log('Post data:', post.pid, 'linkedTopics:', post.linkedTopics);
+				console.log('Posts loaded - Post:', post.pid, 'linkedTopics:', post.linkedTopics);
 				if (post.linkedTopics && post.linkedTopics.length > 0) {
 					console.log('Rendering linked topics for post:', post.pid);
 					renderLinkedTopics(post);
@@ -28,6 +28,21 @@ define('forum/topic/linked-topics', ['hooks'], function (hooks) {
 
 			data.posts.forEach(function (post) {
 				console.log('Topic load - Post:', post.pid, 'linkedTopics:', post.linkedTopics);
+				if (post.linkedTopics && post.linkedTopics.length > 0) {
+					renderLinkedTopics(post);
+				}
+			});
+		});
+
+		// Handle new posts added via socket events
+		$(window).on('action:posts.loaded', function (ev, data) {
+			console.log('Window event - posts loaded:', data);
+			if (!data || !data.posts) {
+				return;
+			}
+
+			data.posts.forEach(function (post) {
+				console.log('Window event - Post:', post.pid, 'linkedTopics:', post.linkedTopics);
 				if (post.linkedTopics && post.linkedTopics.length > 0) {
 					renderLinkedTopics(post);
 				}
