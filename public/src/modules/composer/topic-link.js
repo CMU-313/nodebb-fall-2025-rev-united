@@ -47,6 +47,23 @@ define('composer/topic-link', ['alerts'], function (alerts) {
 			});
 		});
 
+		// Hook into composer submit to add linkedThreadIds
+		require(['hooks'], function (hooks) {
+			hooks.on('filter:composer.submit', function (data) {
+				const uuid = data.composerData.uuid;
+				const content = data.composerData.content;
+
+				if (content && uuid) {
+					const linkedThreadIds = TopicLink.getLinkedTopicIds(uuid, content);
+					if (linkedThreadIds.length > 0) {
+						data.composerData.linkedThreadIds = linkedThreadIds;
+					}
+				}
+
+				return data;
+			});
+		});
+
 		// Clean up on composer discard
 		$(window).on('action:composer.discard', function (evt, data) {
 			delete TopicLink._linkedTopics[data.post_uuid];
