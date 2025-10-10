@@ -1,0 +1,49 @@
+get:
+  tags:
+    - meta
+  summary: Get site resources
+  description: Returns the list of resources available on the Resources page.
+  responses:
+    "200":
+      description: A list of resources.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - type: object
+                properties:
+                  resources:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          description: Resource identifier
+                        name:
+                          type: string
+                          description: Display name of the resource
+                        description:
+                          type: string
+                          description: Optional description provided for the resource
+                        url:
+                          type: string
+                          format: uri
+                          description: External link to the resource
+                  title:
+                    type: string
+                  breadcrumbs:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        text:
+                          type: string
+                        url:
+                          type: string
+                        icon:
+                          type: string
+                      required:
+                        - text
+                      additionalProperties: true
+              - $ref: '../components/schemas/CommonProps.yaml#/CommonProps'
