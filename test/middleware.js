@@ -99,9 +99,9 @@ describe('Middlewares', () => {
 					'admin:groups': true,
 					'admin:tags': true,
 					'admin:settings': true,
-			'admin:resources:create': true,
-			'admin:resources:edit': true,
-			'admin:resources:delete': true,
+					'admin:resources:create': true,
+					'admin:resources:edit': true,
+					'admin:resources:delete': true,
 					superadmin: true,
 				});
 				done();
