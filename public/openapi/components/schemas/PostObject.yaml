@@ -155,6 +155,29 @@ PostObject:
       type: boolean
     replies:
       type: number
+    linkedThreadIds:
+      type: array
+      items:
+        type: number
+      description: Array of topic IDs that this post is linked to for cross-referencing
+    linkedTopics:
+      type: array
+      description: Metadata for each linked topic, used to render inline links client-side
+      items:
+        type: object
+        properties:
+          tid:
+            type: number
+            description: Linked topic identifier
+          title:
+            type: string
+            description: Linked topic title
+          slug:
+            type: string
+            description: URL slug for the linked topic
+        required:
+          - tid
+          - title
 PostDataObject:
   description: The output as returned from `Posts.getPostsData`
   allOf:
@@ -342,11 +365,6 @@ PostDataObject:
               type: number
             hasSingleImmediateReply:
               type: boolean
-        linkedThreadIds:
-          type: array
-          items:
-            type: number
-          description: Array of topic IDs that this post is linked to for cross-referencing
         selfPost:
           type: boolean
         events:
@@ -386,5 +404,28 @@ PostDataObject:
         sourceContent:
           type: string
           description: The markdown equivalent of a remote post content, as received (or fetched) from the remote site.
+        linkedThreadIds:
+          type: array
+          items:
+            type: number
+          description: Array of topic IDs that this post is linked to for cross-referencing
+        linkedTopics:
+          type: array
+          description: Metadata for each linked topic, used to render inline links client-side
+          items:
+            type: object
+            properties:
+              tid:
+                type: number
+                description: Linked topic identifier
+              title:
+                type: string
+                description: Linked topic title
+              slug:
+                type: string
+                description: URL slug for the linked topic
+            required:
+              - tid
+              - title
       required:
         - pid
