@@ -4,15 +4,30 @@ const assert = require('assert');
 // 1) Load your DB mock and inject it in place of ../src/database
 const db = require('./mocks/databasemock');
 const ResourcesPage = require('../src/meta/resources.js');
+const privileges = require('../src/privileges');
 
-const bypassPrivs = { skipPrivileges: true };
+const bypassPrivs = { skipPrivileges: true, uid: 1 };
 
 describe('Resources Data Layer', () => {
+	let originalAdminCan;
+
+	before(() => {
+		originalAdminCan = privileges.admin.can;
+	});
+
 	before(async () => {
 		// Initialize the database mock
 		await db.init();
 		// Initialize the ResourcesPage module
 		await ResourcesPage.init();
+	});
+
+	afterEach(() => {
+		privileges.admin.can = originalAdminCan;
+	});
+
+	after(() => {
+		privileges.admin.can = originalAdminCan;
 	});
 
 	//testing init here 
@@ -89,6 +104,61 @@ describe('Resources Data Layer', () => {
 		const all = await ResourcesPage.getAll();   
 		assert.deepStrictEqual(list, all, 'getList must match getAll');
 	});
+
+	it('should reject add when caller lacks privilege', async () => {
+		privileges.admin.can = async () => false;
+		await assert.rejects(
+			ResourcesPage.add({ name: 'No Access Resource', url: 'https://example.com/no-access' }, { uid: 2001 }),
+			/no-privileges/
+		);
+	});
+
+	it('should allow add when caller has privilege', async () => {
+		const adminUid = 2002;
+		privileges.admin.can = async (privilege, uid) => privilege === 'admin:resources:create' && uid === adminUid;
+		const created = await ResourcesPage.add({ name: 'Admin Resource', url: 'https://example.com/admin-resource' }, { uid: adminUid });
+		assert(created && created.id);
+		await ResourcesPage.remove(created.id, bypassPrivs);
+	});
+
+	it('should reject update when caller lacks privilege', async () => {
+		const resource = await ResourcesPage.add({ name: 'Update Locked', url: 'https://example.com/update-locked' }, bypassPrivs);
+		privileges.admin.can = async () => false;
+		await assert.rejects(
+			ResourcesPage.update(resource.id, { name: 'Should Fail' }, { uid: 2003 }),
+			/no-privileges/
+		);
+		await ResourcesPage.remove(resource.id, bypassPrivs);
+	});
+
+	it('should allow update when caller has privilege', async () => {
+		const resource = await ResourcesPage.add({ name: 'Update Allowed', url: 'https://example.com/update-allowed' }, bypassPrivs);
+		const adminUid = 2004;
+		privileges.admin.can = async (privilege, uid) => privilege === 'admin:resources:edit' && uid === adminUid;
+		const updated = await ResourcesPage.update(resource.id, { description: 'Updated via admin' }, { uid: adminUid });
+		assert.strictEqual(updated.description, 'Updated via admin');
+		await ResourcesPage.remove(resource.id, bypassPrivs);
+	});
+
+	it('should reject remove when caller lacks privilege', async () => {
+		const resource = await ResourcesPage.add({ name: 'Delete Locked', url: 'https://example.com/delete-locked' }, bypassPrivs);
+		privileges.admin.can = async () => false;
+		await assert.rejects(
+			ResourcesPage.remove(resource.id, { uid: 2005 }),
+			/no-privileges/
+		);
+		await ResourcesPage.remove(resource.id, bypassPrivs);
+	});
+
+	it('should allow remove when caller has privilege', async () => {
+		const resource = await ResourcesPage.add({ name: 'Delete Allowed', url: 'https://example.com/delete-allowed' }, bypassPrivs);
+		const adminUid = 2006;
+		privileges.admin.can = async (privilege, uid) => privilege === 'admin:resources:delete' && uid === adminUid;
+		await ResourcesPage.remove(resource.id, { uid: adminUid });
+		const exists = await ResourcesPage.exists(resource.id);
+		assert.strictEqual(exists, false);
+	});
+
 });
 
 
