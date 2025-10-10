@@ -418,6 +418,15 @@ describe('Topic\'s', () => {
 
 			assert.ok(result);
 			assert.ok(result.pid);
+			assert.ok(Array.isArray(result.linkedTopics));
+			assert.strictEqual(result.linkedTopics.length, 2);
+			const linkedTopicIds = result.linkedTopics.map(topic => topic.tid);
+			assert.ok(linkedTopicIds.includes(testTopic1.tid));
+			assert.ok(linkedTopicIds.includes(testTopic2.tid));
+			result.linkedTopics.forEach((topic) => {
+				assert.ok(topic.title);
+				assert.ok(topic.slug !== undefined);
+			});
 
 			// Verify the post was created with linkedThreadIds
 			const postData = await posts.getPostData(result.pid);
@@ -437,6 +446,9 @@ describe('Topic\'s', () => {
 			});
 
 			assert.ok(result);
+			assert.ok(Array.isArray(result.linkedTopics));
+			assert.strictEqual(result.linkedTopics.length, 1);
+			assert.strictEqual(result.linkedTopics[0].tid, testTopic1.tid);
 			const postData = await posts.getPostData(result.pid);
 			assert.ok(postData.linkedThreadIds);
 			assert.strictEqual(postData.linkedThreadIds.length, 1);
@@ -451,6 +463,8 @@ describe('Topic\'s', () => {
 			});
 
 			assert.ok(result);
+			assert.ok(Array.isArray(result.linkedTopics));
+			assert.strictEqual(result.linkedTopics.length, 0);
 			const postData = await posts.getPostData(result.pid);
 			assert.ok(Array.isArray(postData.linkedThreadIds));
 			assert.strictEqual(postData.linkedThreadIds.length, 0);
@@ -465,6 +479,12 @@ describe('Topic\'s', () => {
 			});
 
 			assert.ok(result);
+			assert.ok(Array.isArray(result.linkedTopics));
+			assert.strictEqual(result.linkedTopics.length, 2);
+			const filteredTopicIds = result.linkedTopics.map(topic => topic.tid);
+			assert.ok(filteredTopicIds.includes(testTopic1.tid));
+			assert.ok(filteredTopicIds.includes(testTopic2.tid));
+			assert.ok(!filteredTopicIds.includes(testTopic3.tid));
 			const postData = await posts.getPostData(result.pid);
 			assert.ok(postData.linkedThreadIds);
 			assert.strictEqual(postData.linkedThreadIds.length, 2);
@@ -482,6 +502,11 @@ describe('Topic\'s', () => {
 			});
 
 			assert.ok(result);
+			assert.ok(Array.isArray(result.linkedTopics));
+			assert.strictEqual(result.linkedTopics.length, 2);
+			const dedupedTopicIds = result.linkedTopics.map(topic => topic.tid);
+			assert.ok(dedupedTopicIds.includes(testTopic1.tid));
+			assert.ok(dedupedTopicIds.includes(testTopic2.tid));
 			const postData = await posts.getPostData(result.pid);
 			assert.ok(postData.linkedThreadIds);
 			assert.strictEqual(postData.linkedThreadIds.length, 2);
@@ -510,6 +535,8 @@ describe('Topic\'s', () => {
 			});
 
 			assert.ok(result);
+			assert.ok(Array.isArray(result.linkedTopics));
+			assert.strictEqual(result.linkedTopics.length, 0);
 			const postData = await posts.getPostData(result.pid);
 			assert.ok(Array.isArray(postData.linkedThreadIds));
 			assert.strictEqual(postData.linkedThreadIds.length, 0);
@@ -532,6 +559,11 @@ describe('Topic\'s', () => {
 			assert.strictEqual(response.body.status.code, 'ok');
 			assert.ok(response.body.response);
 			assert.ok(response.body.response.pid);
+			assert.ok(Array.isArray(response.body.response.linkedTopics));
+			assert.strictEqual(response.body.response.linkedTopics.length, 2);
+			const apiLinkedTopicIds = response.body.response.linkedTopics.map(topic => topic.tid);
+			assert.ok(apiLinkedTopicIds.includes(testTopic1.tid));
+			assert.ok(apiLinkedTopicIds.includes(testTopic2.tid));
 
 			// Verify the post was created correctly via API
 			const postData = await posts.getPostData(response.body.response.pid);
