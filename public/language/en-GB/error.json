@@ -68,6 +68,7 @@
 
 	"no-category": "Category does not exist",
 	"no-topic": "Topic does not exist",
+	"linked-threads-not-found": "Linked topics not found: %1",
 	"no-post": "Post does not exist",
 	"no-group": "Group does not exist",
 	"no-user": "User does not exist",
