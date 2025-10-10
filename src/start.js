@@ -18,6 +18,9 @@ start.start = async function () {
 		const meta = require('./meta');
 		await meta.configs.init();
 
+		const bannedWords = require('./banned-words');
+		await bannedWords.init();
+
 		if (nconf.get('runJobs')) {
 			await runUpgrades();
 		}

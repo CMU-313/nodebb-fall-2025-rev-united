@@ -1,7 +1,7 @@
 'use strict';
 
 const assert = require('assert');
-const BannedWords = require('../src/meta/bannedwords');
+const BannedWords = require('../src/banned-words');
 const db = require('./mocks/databasemock');
 
 describe('BannedWords Data Layer', () => {
