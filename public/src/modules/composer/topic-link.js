@@ -1,6 +1,6 @@
 'use strict';
 
-define('composer/topic-link', ['alerts'], function (alerts) {
+define('composer/topic-link', [], function () {
 	const TopicLink = {};
 
 	// Store linked topics with their metadata
@@ -80,7 +80,7 @@ define('composer/topic-link', ['alerts'], function (alerts) {
 		while ((match = hashtagPattern.exec(content)) !== null) {
 			const hashtag = match[1];
 			// Find matching topic by comparing slugified title
-			for (const tid in linkedTopics) {
+			for (const tid of Object.keys(linkedTopics)) {
 				const topic = linkedTopics[tid];
 				const slugifiedTitle = topic.title.replace(/\s+/g, '-');
 				if (slugifiedTitle === hashtag) {

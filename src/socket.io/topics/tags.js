@@ -144,11 +144,12 @@ module.exports = function (SocketTopics) {
 		const lowerQuery = query.toLowerCase();
 		const results = topicData
 			.map((topic, index) => ({ ...topic, canRead: canReadArray[index] }))
-			.filter(topic =>
+			.filter(topic => (
 				topic.canRead &&
 				!topic.deleted &&
+				cids.includes(parseInt(topic.cid, 10)) &&
 				topic.title.toLowerCase().includes(lowerQuery)
-			)
+			))
 			.slice(0, 10)
 			.map(topic => ({
 				tid: topic.tid,
