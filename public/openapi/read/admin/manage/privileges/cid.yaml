@@ -39,10 +39,34 @@ get:
                             type: array
                             items:
                               type: string
+                            example:
+                              - admin:dashboard
+                              - admin:categories
+                              - admin:privileges
+                              - admin:admins-mods
+                              - admin:users
+                              - admin:groups
+                              - admin:tags
+                              - admin:settings
+                              - admin:resources:create
+                              - admin:resources:edit
+                              - admin:resources:delete
                           groups:
                             type: array
                             items:
                               type: string
+                            example:
+                              - groups:admin:dashboard
+                              - groups:admin:categories
+                              - groups:admin:privileges
+                              - groups:admin:admins-mods
+                              - groups:admin:users
+                              - groups:admin:groups
+                              - groups:admin:tags
+                              - groups:admin:settings
+                              - groups:admin:resources:create
+                              - groups:admin:resources:edit
+                              - groups:admin:resources:delete
                       users:
                         type: array
                         items:
