@@ -24,6 +24,7 @@ const helmet = require('helmet');
 const Benchpress = require('benchpressjs');
 const db = require('./database');
 const analytics = require('./analytics');
+const bannedWords = require('./banned-words');
 const errors = require('./meta/errors');
 const file = require('./file');
 const emailer = require('./emailer');
@@ -113,8 +114,7 @@ async function initializeNodeBB() {
 	await routes(app, middleware);
 	await privileges.init();
 	await meta.blacklist.load();
-	// init banned words
-	await require('./meta/bannedwords').init();
+	await bannedWords.init();
 	await flags.init();
 	await analytics.init();
 	await errors.init();

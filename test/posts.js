@@ -786,7 +786,7 @@ describe('Post\'s', () => {
 			validate = require('../src/posts/validate');
 			
 			// Initialize banned words for tests
-			const bannedWords = require('../src/meta/bannedwords');
+			const bannedWords = require('../src/banned-words');
 			await bannedWords.init();
 		});
 

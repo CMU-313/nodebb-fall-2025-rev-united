@@ -4,7 +4,7 @@ const meta = require('../meta');
 const analytics = require('../analytics');
 const privileges = require('../privileges');
 const groups = require('../groups');
-
+const bannedWords = require('../banned-words');
 const adminApi = module.exports;
 
 // Settings
@@ -46,8 +46,6 @@ adminApi.listGroups = async () => {
 };
 
 // Banned Words
-const bannedWords = require('../meta/bannedwords');
-
 adminApi.getBannedWords = async function (caller) {
 	if (!await privileges.admin.can('admin:settings', caller.uid)) {
 		throw new Error('[[error:no-privileges]]');

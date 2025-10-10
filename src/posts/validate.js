@@ -1,15 +1,14 @@
 'use strict';
 
-const meta = require('../meta');
+const bannedWords = require('../banned-words');
 
 // postData: object with at least 'title' and 'content'
 // returns: object { allowed: boolean, banned: string[] }
 function checkPostDataForBannedContent(postData) {
-	const bannedWords = meta.bannedwords.getList();
 	const bannedFound = [];
 	const text = `${postData.title || ''} ${postData.content || ''}`.toLowerCase();
 
-	for (const word of bannedWords) {
+	for (const word of bannedWords.getList()) {
 		const escaped = escapeForRegex(word);
 		if (!escaped) {
 			continue;
