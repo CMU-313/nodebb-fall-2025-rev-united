@@ -5,6 +5,8 @@ const assert = require('assert');
 const db = require('./mocks/databasemock');
 const ResourcesPage = require('../src/meta/resources.js');
 
+const bypassPrivs = { skipPrivileges: true };
+
 describe('Resources Data Layer', () => {
 	before(async () => {
 		// Initialize the database mock
@@ -26,7 +28,7 @@ describe('Resources Data Layer', () => {
 			name: 'Course Website',
 			url: 'https://cmu-313.github.io/',
 			description: 'Check out the website here',
-		});
+		}, bypassPrivs);
 		const resources = await ResourcesPage.getAll();
 		assert(resources.some(r => r.id === created.id));
 	});
@@ -37,12 +39,12 @@ describe('Resources Data Layer', () => {
 			name: '313 GitHub',
 			url: 'https://github.com/CMU-313',
 			description: 'Reference our class GitHub',
-		});
+		}, bypassPrivs);
 		const updated = await ResourcesPage.update(r.id, {
 			name: '313 FALL 2025 GitHub',
 			url: 'https://github.com/CMU-313',
 			description: 'Updated GitHub as of Fall 2025!',
-		});
+		}, bypassPrivs);
 		const resources = await ResourcesPage.getAll();
 		assert(resources.some(x => x.id === r.id && x.name === '313 FALL 2025 GitHub' && x.description === 'Updated GitHub as of Fall 2025!'));
 	});
@@ -52,8 +54,8 @@ describe('Resources Data Layer', () => {
 		const r = await ResourcesPage.add({
 			name: 'Test Resources',
 			url: 'https://cmu-313.github.io',
-		});
-		await ResourcesPage.remove(r.id);
+		}, bypassPrivs);
+		await ResourcesPage.remove(r.id, bypassPrivs);
 		const resources = await ResourcesPage.getAll();
 		assert(!resources.includes(r.id));
 		//assert(resources.length > 0); //ensure that other resources still exist
@@ -63,9 +65,9 @@ describe('Resources Data Layer', () => {
 	//testing the .load function here 
 
 	it('should load resources in the right order', async () => {
-		const a = await ResourcesPage.add({ name: 'Test Resource 2', url: 'https://www.reddit.com/r/cmu/comments/fz7ian/17313_foundations_of_software_engineering/' });
+		const a = await ResourcesPage.add({ name: 'Test Resource 2', url: 'https://www.reddit.com/r/cmu/comments/fz7ian/17313_foundations_of_software_engineering/' }, bypassPrivs);
 		await new Promise(r => setTimeout(r, 5)); //just to ensure that the times dont overlap 
-		const b = await ResourcesPage.add({ name: 'Test Resource 3', url: 'https://www.cs.cmu.edu/~ckaestne/17313/2018/' });
+		const b = await ResourcesPage.add({ name: 'Test Resource 3', url: 'https://www.cs.cmu.edu/~ckaestne/17313/2018/' }, bypassPrivs);
 		const loaded = await ResourcesPage.load(); 
 		assert.strictEqual(loaded[0].id, b.id);
 		assert.strictEqual(loaded[1].id, a.id);
@@ -73,7 +75,7 @@ describe('Resources Data Layer', () => {
 
 	//testing the exists function here 
 	it('Return true is the id exists and false otherwise', async () => {
-		const existingID = await ResourcesPage.add({ name: 'Existing Resource', url: 'https://www.youtube.com/' });
+		const existingID = await ResourcesPage.add({ name: 'Existing Resource', url: 'https://www.youtube.com/' }, bypassPrivs);
 		const checkTrue = await ResourcesPage.exists(existingID.id);
 		const checkFalse = await ResourcesPage.exists('1000000'); 
 		assert.strictEqual(checkTrue, true);

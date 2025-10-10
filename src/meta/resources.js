@@ -3,6 +3,7 @@
 
 const db = require('../database');
 const pubsub = require('../pubsub');
+const privileges = require('../privileges');
 
 const ResourcesPage = module.exports; //
 
@@ -23,6 +24,20 @@ async function reloadFromDb() {
 	const objs = ids.length ? await db.getObjects(ids.map(id => `resource:${id}`)) : [];
 	cache = objs.filter(Boolean);
 	loaded = true;
+}
+
+async function assertAdminPrivilege(privilege, opts = {}) {
+	if (opts && opts.skipPrivileges) {
+		return;
+	}
+	const uid = opts && opts.uid;
+	if (!uid) {
+		throw new Error('[[error:no-privileges]]');
+	}
+	const allowed = await privileges.admin.can(privilege, uid);
+	if (!allowed) {
+		throw new Error('[[error:no-privileges]]');
+	}
 }
 
 // initialize the actual resources table here 
@@ -72,7 +87,7 @@ ResourcesPage.getAll = async function () {
 	return cache.slice();
 };
 
-ResourcesPage.add = async function ({ name, url, description = '' } = {}) {
+ResourcesPage.add = async function ({ name, url, description = '' } = {}, opts = {}) {
 	if (name == null || url == null) {
 		throw new Error('[[error:invalid-resource]]');
 	}
@@ -88,6 +103,7 @@ ResourcesPage.add = async function ({ name, url, description = '' } = {}) {
 		throw new Error('Each Resource MUST have a valid URL. ');
 	}
 
+	await assertAdminPrivilege('admin:resources:create', opts);
 	const id = String(await db.incrObjectField('global', 'nextResourceId'));
 	const obj = {
 		id,
@@ -106,10 +122,11 @@ ResourcesPage.add = async function ({ name, url, description = '' } = {}) {
 
 
 
-ResourcesPage.remove = async function (id) {
+ResourcesPage.remove = async function (id, opts = {}) {
 	if (id == null) {
 		throw new Error('[[error:invalid-resource-id]]');
 	}
+	await assertAdminPrivilege('admin:resources:delete', opts);
 	const key = `resource:${String(id)}`;
 	await db.sortedSetRemove('resources:all', String(id));
 	await db.delete(key);
@@ -129,6 +146,7 @@ ResourcesPage.exists = async function (id) {
 // Update Name, URL, or Description 
 ResourcesPage.update = async function (id, { name, url, description } = {}, opts = {}) {
 	if (id == null) throw new Error('[[error:invalid-resource-id]]');
+	await assertAdminPrivilege('admin:resources:edit', opts);
 	const key = `resource:${String(id)}`;
 	const existing = await db.getObject(key);
 	if (!existing) throw new Error('[[error:resource-not-found]]');
