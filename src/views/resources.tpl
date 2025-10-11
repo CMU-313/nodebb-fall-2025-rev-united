@@ -1,21 +1,31 @@
 <div class="container py-4">
 	<div class="row justify-content-center">
 		<div class="col-12 col-lg-10">
-			<h1 class="fs-3 mb-4">[[global:resources]]</h1>
+			<h1 class="fs-3 mb-4">Class Resources</h1>
 			{{{ if !resources.length }}}
 			<div class="alert alert-info" role="alert">
-				[[global:no-resources]]
+				No Resources Yet!
 			</div>
 			{{{ else }}}
-			<div class="list-group shadow-sm">
-				{{{ each resources }}}
-				<a href="{./url}" class="list-group-item list-group-item-action" target="_blank" rel="noopener">
-					<h2 class="h5 mb-1">{./name}</h2>
-					{{{ if ./description }}}
-					<p class="mb-0 text-muted">{./description}</p>
-					{{{ end }}}
-				</a>
-				{{{ end }}}
+			<div class="table-responsive shadow-sm">
+				<table class="table table-striped align-middle">
+					<thead class="table-light">
+						<tr>
+							<th scope="col">[[global:resources-name]]</th>
+							<th scope="col">[[global:resources-description]]</th>
+							<th scope="col">[[global:resources-link]]</th>
+						</tr>
+					</thead>
+					<tbody>
+						{{{ each resources }}}
+						<tr>
+							<td class="fw-semibold">{./name}</td>
+							<td>{./description}</td>
+							<td><a href="{./url}" target="_blank" rel="noopener" class="text-decoration-none">[[global:resources-open-link]]</a></td>
+						</tr>
+						{{{ end }}}
+					</tbody>
+				</table>
 			</div>
 			{{{ end }}}
 		</div>

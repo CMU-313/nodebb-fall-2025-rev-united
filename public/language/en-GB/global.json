@@ -152,5 +152,9 @@
  "rss-feed": "RSS Feed",
  "skip-to-content": "Skip to content",
  "resources": "Resources",
- "no-resources": "No resources available yet."
+ "no-resources": "No Resources Yet!",
+ "resources-name": "Name",
+ "resources-description": "Description",
+ "resources-link": "Link",
+ "resources-open-link": "View"
 }
