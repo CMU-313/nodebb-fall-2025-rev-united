@@ -25,6 +25,9 @@ const _privilegeMap = new Map([
 	['admin:groups', { label: '[[admin/manage/privileges:admin-groups]]', type: 'admin' }],
 	['admin:tags', { label: '[[admin/manage/privileges:admin-tags]]', type: 'admin' }],
 	['admin:settings', { label: '[[admin/manage/privileges:admin-settings]]', type: 'admin' }],
+	['admin:resources:create', { label: '[[admin/manage/privileges:admin-resources-create]]', type: 'admin' }],
+	['admin:resources:edit', { label: '[[admin/manage/privileges:admin-resources-edit]]', type: 'admin' }],
+	['admin:resources:delete', { label: '[[admin/manage/privileges:admin-resources-delete]]', type: 'admin' }],
 ]);
 
 privsAdmin.init = async () => {

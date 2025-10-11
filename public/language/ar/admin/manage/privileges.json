@@ -62,5 +62,8 @@
 	"alert.admin-warning": "Administrators implicitly get all privileges",
   	"alert.copyPrivilegesFrom-title": "Select a category to copy from",
   	"alert.copyPrivilegesFrom-warning": "This will copy <strong>%1</strong> from the selected category.",
-  	"alert.copyPrivilegesFromGroup-warning": "This will copy this group's set of <strong>%1</strong> from the selected category."
+  	"alert.copyPrivilegesFromGroup-warning": "This will copy this group's set of <strong>%1</strong> from the selected category.",
+	"admin-resources-create": "Create Resources",
+	"admin-resources-edit": "Edit Resources",
+	"admin-resources-delete": "Delete Resources"
 }

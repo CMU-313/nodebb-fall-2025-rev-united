@@ -691,6 +691,9 @@ describe('Admin Controllers', () => {
 				'admin:groups',
 				'admin:tags',
 				'admin:settings',
+				'admin:resources:create',
+				'admin:resources:edit',
+				'admin:resources:delete',
 				'groups:admin:dashboard',
 				'groups:admin:categories',
 				'groups:admin:privileges',
@@ -699,6 +702,9 @@ describe('Admin Controllers', () => {
 				'groups:admin:groups',
 				'groups:admin:tags',
 				'groups:admin:settings',
+				'groups:admin:resources:create',
+				'groups:admin:resources:edit',
+				'groups:admin:resources:delete',
 			]);
 		});
 		it('should list user admin privileges', async () => {
@@ -712,6 +718,9 @@ describe('Admin Controllers', () => {
 				'admin:groups': false,
 				'admin:tags': false,
 				'admin:settings': false,
+				'admin:resources:create': false,
+				'admin:resources:edit': false,
+				'admin:resources:delete': false,
 			});
 		});
 
@@ -730,6 +739,9 @@ describe('Admin Controllers', () => {
 				'groups:admin:groups': true,
 				'groups:admin:tags': false,
 				'groups:admin:settings': false,
+				'groups:admin:resources:create': false,
+				'groups:admin:resources:edit': false,
+				'groups:admin:resources:delete': false,
 			});
 		});
 
