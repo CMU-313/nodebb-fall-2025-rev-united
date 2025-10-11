@@ -152,6 +152,9 @@ module.exports = function (Topics) {
 			}
 		});
 
+		// Add linked topic titles for rendering
+		await addLinkedTopicData(postData);
+
 		const result = await plugins.hooks.fire('filter:topics.addPostData', {
 			posts: postData,
 			uid: uid,
@@ -473,4 +476,45 @@ module.exports = function (Topics) {
 
 		return add.length + (current - remove);
 	};
+
+	async function addLinkedTopicData(postData) {
+		if (!Array.isArray(postData) || !postData.length) {
+			return;
+		}
+
+		// Collect all unique linkedThreadIds from all posts
+		const allLinkedTids = new Set();
+		postData.forEach((post) => {
+			if (post && Array.isArray(post.linkedThreadIds) && post.linkedThreadIds.length > 0) {
+				post.linkedThreadIds.forEach(tid => allLinkedTids.add(tid));
+			}
+		});
+
+		if (allLinkedTids.size === 0) {
+			return;
+		}
+
+		// Fetch topic data for all linked topics
+		const linkedTids = Array.from(allLinkedTids);
+		const linkedTopics = await Topics.getTopicsFields(linkedTids, ['tid', 'title', 'slug']);
+
+		// Create a map for quick lookup
+		const topicMap = {};
+		linkedTopics.forEach((topic) => {
+			if (topic && topic.tid) {
+				topicMap[topic.tid] = topic;
+			}
+		});
+
+		// Add linked topic data to each post
+		postData.forEach((post) => {
+			if (post && Array.isArray(post.linkedThreadIds) && post.linkedThreadIds.length > 0) {
+				post.linkedTopics = post.linkedThreadIds
+					.map(tid => topicMap[tid])
+					.filter(Boolean);
+			} else {
+				post.linkedTopics = [];
+			}
+		});
+	}
 };
