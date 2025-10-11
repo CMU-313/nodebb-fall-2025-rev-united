@@ -49,6 +49,7 @@ _mounts.mod = (app, middleware, controllers) => {
 	setupPageRoute(app, '/flags', [], controllers.mods.flags.list);
 	setupPageRoute(app, '/flags/:flagId', [], controllers.mods.flags.detail);
 	setupPageRoute(app, '/post-queue/:id?', [], controllers.mods.postQueue);
+	setupPageRoute(app, '/banned-review', [], controllers.mods.bannedReview);
 };
 
 _mounts.globalMod = (app, middleware, controllers) => {
