@@ -382,6 +382,7 @@ describe('API', async () => {
 			'/api/user/{userslug}/theme', // from persona
 			'/api/v3/admin/banned-words', // exclude until documented
 			'/api/admin/banned-words', // legacy ACP route
+			'/api/banned-review',
 		];
 		paths = paths.filter(path => path.method !== '_all' && !exclusionPrefixes.some(prefix => path.path.startsWith(prefix)));
 

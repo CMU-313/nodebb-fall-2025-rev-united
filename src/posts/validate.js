@@ -4,23 +4,12 @@ const bannedWords = require('../banned-words');
 
 // postData: object with at least 'title' and 'content'
 // returns: object { allowed: boolean, banned: string[] }
-function checkPostDataForBannedContent(postData) {
-	const bannedFound = [];
-	const text = `${postData.title || ''} ${postData.content || ''}`.toLowerCase();
-
-	for (const word of bannedWords.getList()) {
-		const escaped = escapeForRegex(word);
-		if (!escaped) {
-			continue;
-		}
-		const regex = new RegExp(`\\b${escaped}\\b`, 'i');
-		if (regex.test(text)) {
-			bannedFound.push(word);
-		}
-	}
+function checkPostDataForBannedContent(postData = {}) {
+	const text = `${postData.title || ''} ${postData.content || ''}`;
+	const bannedFound = bannedWords.findMatches(text);
 
 	return {
-		allowed: (bannedFound.length === 0),
+		allowed: bannedFound.length === 0,
 		banned: bannedFound,
 	};
 }
@@ -28,10 +17,3 @@ function checkPostDataForBannedContent(postData) {
 module.exports = {
 	checkPostDataForBannedContent,
 };
-
-function escapeForRegex(word) {
-	if (!word) {
-		return '';
-	}
-	return word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').toLowerCase();
-}
