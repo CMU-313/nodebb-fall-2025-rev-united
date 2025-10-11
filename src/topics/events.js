@@ -83,7 +83,6 @@ Events.init = async () => {
 
 
 async function translateEventArgs(...args) {
-	console.log('ADITI_AGNI');
 	const event = args[0];
 	const language = args[1];
 	const prefix = args[2];
