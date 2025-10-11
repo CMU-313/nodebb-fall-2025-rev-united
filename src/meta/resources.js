@@ -17,6 +17,33 @@ ResourcesPage._resources = [
 	{ name: 'Calendar', description: 'Find the class calendar here!', url: 'https://cmu-313.github.io/#class-calendar' },
 ];
 
+async function ensureAdminGroupPrivileges() {
+	const adminGroup = 'administrators';
+	const desired = [
+		'groups:admin:resources:create',
+		'groups:admin:resources:edit',
+		'groups:admin:resources:delete',
+	];
+
+	let current;
+	try {
+		current = await privileges.admin.groupPrivileges(adminGroup);
+	} catch (err) {
+		return;
+	}
+
+	const missing = desired.filter(privilege => !current || !current[privilege]);
+	if (!missing.length) {
+		return;
+	}
+
+	try {
+		await privileges.admin.give(missing, adminGroup);
+	} catch (err) {
+		// Ignore privilege grant failures; admins can still manage via ACP.
+	}
+}
+
 
 // Here we are reloading the cache from DB 
 async function reloadFromDb() {
@@ -34,8 +61,9 @@ async function assertAdminPrivilege(privilege, opts = {}) {
 	if (!uid) {
 		throw new Error('[[error:no-privileges]]');
 	}
-	const allowed = await privileges.admin.can(privilege, uid);
-	if (!allowed) {
+	const privilegesToCheck = Array.isArray(privilege) ? privilege : [privilege];
+	const results = await Promise.all(privilegesToCheck.map(name => privileges.admin.can(name, uid)));
+	if (!results.some(Boolean)) {
 		throw new Error('[[error:no-privileges]]');
 	}
 }
@@ -60,6 +88,7 @@ ResourcesPage.init = async function () {
 		}
 	}
 
+	await ensureAdminGroupPrivileges();
 	await reloadFromDb();
 	// refresh cache across workers
 	pubsub.on('meta:resources:reload', reloadFromDb);
@@ -146,7 +175,7 @@ ResourcesPage.exists = async function (id) {
 // Update Name, URL, or Description 
 ResourcesPage.update = async function (id, { name, url, description } = {}, opts = {}) {
 	if (id == null) throw new Error('[[error:invalid-resource-id]]');
-	await assertAdminPrivilege('admin:resources:edit', opts);
+	await assertAdminPrivilege(['admin:resources:edit', 'admin:resources:create'], opts);
 	const key = `resource:${String(id)}`;
 	const existing = await db.getObject(key);
 	if (!existing) throw new Error('[[error:resource-not-found]]');

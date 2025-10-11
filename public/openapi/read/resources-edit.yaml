@@ -1,11 +1,19 @@
 get:
   tags:
     - meta
-  summary: Get resource creation form context
-  description: Returns the contextual data required to render the Add Resource form.
+  summary: Get resource edit form context
+  description: Returns contextual data and prefilled values for editing an existing resource.
+  parameters:
+    - name: resourceId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Identifier of the resource being edited
+      example: 42
   responses:
     "200":
-      description: Resource creation context.
+      description: Resource edit context.
       content:
         application/json:
           schema:
@@ -30,17 +38,14 @@ get:
                       additionalProperties: true
                   values:
                     type: object
-                    description: Prefilled values for the Add Resource form
+                    description: Prefilled values for the resource being edited
                     properties:
                       name:
                         type: string
-                        description: Resource name entered by the user
                       description:
                         type: string
-                        description: Resource description entered by the user
                       url:
                         type: string
-                        description: Resource URL entered by the user
                     additionalProperties: false
                   error:
                     type: string
@@ -48,14 +53,10 @@ get:
                     description: Localised error message returned when validation fails
                   pageTitle:
                     type: string
-                    description: Localised heading for the form page
                   submitLabel:
                     type: string
-                    description: Localised label for the submit button
                   formAction:
                     type: string
-                    description: Absolute path to submit the form POST
                   cancelUrl:
                     type: string
-                    description: URL to return to when the user cancels the form
               - $ref: '../components/schemas/CommonProps.yaml#/CommonProps'

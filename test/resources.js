@@ -140,11 +140,31 @@ describe('Resources Data Layer', () => {
 		await ResourcesPage.remove(resource.id, bypassPrivs);
 	});
 
+	it('should allow update when caller only has create privilege', async () => {
+		const resource = await ResourcesPage.add({ name: 'Update With Create Only', url: 'https://example.com/update-create-only' }, bypassPrivs);
+		const adminUid = 2007;
+		privileges.admin.can = async (privilege, uid) => privilege === 'admin:resources:create' && uid === adminUid;
+		const updated = await ResourcesPage.update(resource.id, { description: 'Updated via create privilege' }, { uid: adminUid });
+		assert.strictEqual(updated.description, 'Updated via create privilege');
+		await ResourcesPage.remove(resource.id, bypassPrivs);
+	});
+
 	it('should reject remove when caller lacks privilege', async () => {
 		const resource = await ResourcesPage.add({ name: 'Delete Locked', url: 'https://example.com/delete-locked' }, bypassPrivs);
 		privileges.admin.can = async () => false;
 		await assert.rejects(
 			ResourcesPage.remove(resource.id, { uid: 2005 }),
+			/no-privileges/
+		);
+		await ResourcesPage.remove(resource.id, bypassPrivs);
+	});
+
+	it('should reject remove when caller only has create privilege', async () => {
+		const resource = await ResourcesPage.add({ name: 'Delete With Create Only', url: 'https://example.com/delete-create-only' }, bypassPrivs);
+		const adminUid = 2008;
+		privileges.admin.can = async (privilege, uid) => privilege === 'admin:resources:create' && uid === adminUid;
+		await assert.rejects(
+			ResourcesPage.remove(resource.id, { uid: adminUid }),
 			/no-privileges/
 		);
 		await ResourcesPage.remove(resource.id, bypassPrivs);
@@ -160,8 +180,6 @@ describe('Resources Data Layer', () => {
 	});
 
 });
-
-
 
 
 

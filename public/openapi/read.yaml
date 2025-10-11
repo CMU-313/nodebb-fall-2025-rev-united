@@ -122,6 +122,8 @@ paths:
     $ref: 'read/resources.yaml'
   /api/resources/new:
     $ref: 'read/resources-new.yaml'
+  "/api/resources/{resourceId}/edit":
+    $ref: 'read/resources-edit.yaml'
   /api/admin/manage/categories:
     $ref: 'read/admin/manage/categories.yaml'
   "/api/admin/manage/categories/{category_id}":

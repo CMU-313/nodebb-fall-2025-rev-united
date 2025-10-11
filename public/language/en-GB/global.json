@@ -157,5 +157,7 @@
  "resources-description": "Description",
  "resources-link": "Link",
  "resources-open-link": "View",
- "resources-add": "Add Resource"
+ "resources-add": "Add Resource",
+ "resources-edit": "Edit",
+ "resources-delete": "Delete"
 }
