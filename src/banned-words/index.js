@@ -5,6 +5,12 @@ const pubsub = require('../pubsub');
 
 const BannedWords = module.exports;
 
+// Utility for safe regex construction
+function escapeForRegex(word) {
+	if (!word) return '';
+	return word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').toLowerCase();
+}
+
 let cache = [];
 let loaded = false;
 
@@ -23,6 +29,7 @@ async function reloadFromDb() {
 	cache = await db.getSetMembers('banned-words') || [];
 	loaded = true;
 }
+
 
 
 BannedWords.init = async function () {
@@ -96,10 +103,29 @@ BannedWords.update = async function (oldWord, newWord) {
 	await BannedWords.add(newWord);
 };
 
-// Returns true if the given text contains any banned words
-BannedWords.containsBannedWords = async function (text) {
-	if (!text) return false;
-	const words = await BannedWords.getAll();
-	const lower = text.toLowerCase();
-	return words.some(w => lower.includes(w));
+// Return a unique list of banned terms found in the given text (word-boundary, case-insensitive)
+BannedWords.findMatches = function (rawText) {
+	const text = String(rawText || '');
+	if (!text.trim()) {
+		return [];
+	}
+	const haystack = text.toLowerCase();
+	const seen = new Set();
+	const matches = [];
+
+	for (const original of BannedWords.getList()) {
+		const w = String(original || '').trim().toLowerCase();
+		if (!w || seen.has(w)) continue;
+
+		const escaped = escapeForRegex(w);
+		if (!escaped) continue;
+
+		// ASCII-safe version
+		const regex = new RegExp(`(?:^|[^A-Za-z0-9_])${escaped}(?=$|[^A-Za-z0-9_])`, 'i');
+		if (regex.test(haystack)) {
+			matches.push(original);
+			seen.add(w);
+		}
+	}
+	return matches;
 };
