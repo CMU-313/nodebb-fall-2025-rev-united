@@ -64,4 +64,54 @@ describe('BannedWords Data Layer', () => {
 		assert.deepStrictEqual(a, b);
 		assert.notStrictEqual(a, b);
 	});
+
+	it('should retroactively flag existing posts when a new banned word is added', async () => {
+		const tid = '900100';
+		const pid = '800100';
+
+		// Ensure clean keys for this test
+		await Promise.all([
+			db.delete(`topic:${tid}`),
+			db.delete(`post:${pid}`),
+			db.sortedSetRemove('posts:pid', pid),
+			db.delete(`post:${pid}:banned:matches`),
+		]);
+
+		// Seed a legacy topic/post containing the soon-to-be-banned word "retroflag"
+		await db.setObject(`topic:${tid}`, {
+			tid,
+			title: 'Legacy topic mentioning retroflag',
+			mainPid: pid,
+		});
+		await db.setObject(`post:${pid}`, {
+			pid,
+			tid,
+			content: 'Body also says retroflag once.',
+		});
+		await db.sortedSetAdd('posts:pid', Date.now(), pid);
+
+		// Nothing flagged yet
+		const initiallyFlagged = await db.getSortedSetRange('posts:flagged:banned', 0, -1);
+		assert(!initiallyFlagged.includes(pid), 'Precondition failed: pid already flagged');
+
+		// Add the word AFTER content exists (should trigger retro scan)
+		await BannedWords.add('retroflag');
+
+		// Post is marked in global set and per-post matches
+		const flagged = await db.getSortedSetRange('posts:flagged:banned', 0, -1);
+		assert(flagged.includes(pid), 'Expected pid to be in posts:flagged:banned');
+
+		const matches = await db.getObject(`post:${pid}:banned:matches`);
+		assert(matches && matches.retroflag, 'Expected per-post match entry for "retroflag"');
+
+		// Cleanup
+		await BannedWords.remove('retroflag');
+		await Promise.all([
+			db.sortedSetRemove('posts:flagged:banned', pid),
+			db.delete(`post:${pid}:banned:matches`),
+			db.sortedSetRemove('posts:pid', pid),
+			db.delete(`post:${pid}`),
+			db.delete(`topic:${tid}`),
+		]);
+	});
 });

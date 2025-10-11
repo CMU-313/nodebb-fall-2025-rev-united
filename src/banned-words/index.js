@@ -2,6 +2,7 @@
 
 const db = require('../database');
 const pubsub = require('../pubsub');
+const batch = require('../batch');
 
 const BannedWords = module.exports;
 
@@ -54,7 +55,7 @@ BannedWords.load = async function () {
 	return await db.getSetMembers('banned-words');
 };
 
-// REturned the cached list, ensuring it is initialized once
+// Returned the cached list, ensuring it is initialized once
 BannedWords.getAll = async function () {
 	if (!loaded) {
 		await reloadFromDb();
@@ -62,6 +63,55 @@ BannedWords.getAll = async function () {
 	return cache.slice();
 };
 
+// Retroactively scan all existing posts for a specific normalized word
+BannedWords.scanExistingPostsForWord = async function (normalizedWord) {
+	const w = String(normalizedWord || '').trim().toLowerCase();
+	if (!w) return 0;
+
+	const escaped = escapeForRegex(w);
+	if (!escaped) return 0;
+
+	// Non-word guards so symbol terms like "c++" match
+	const regex = new RegExp(`(?:^|[^A-Za-z0-9_])${escaped}(?=$|[^A-Za-z0-9_])`, 'i');
+
+	let total = 0;
+
+	await batch.processSortedSet('posts:pid', async (pids) => {
+		// Load posts
+		const posts = await db.getObjects(pids.map(pid => `post:${pid}`));
+
+		// Load topic titles and dedupe tids before fetching
+		const tids = Array.from(new Set(posts.map(p => p && p.tid).filter(Boolean)));
+		const topicObjs = tids.length ? await db.getObjects(tids.map(tid => `topic:${tid}`)) : [];
+		const titleByTid = {};
+		topicObjs.forEach((t) => { if (t && t.tid) titleByTid[String(t.tid)] = String(t.title || ''); });
+
+		// Scan posts for matches
+		const flagged = [];
+		for (const p of posts) {
+			const pid = p && p.pid;
+			if (!pid) continue;
+
+			const title = titleByTid[String(p.tid)] || '';
+			const content = String(p.content || '');
+			const text = `${title} ${content}`;
+
+			if (text && regex.test(text)) {
+				flagged.push(pid);
+			}
+		}
+
+		// Bulk-write flags for this batch
+		if (flagged.length) {
+			const now = Date.now();
+			await db.setObjectBulk(flagged.map(pid => [`post:${pid}:banned:matches`, { [w]: now }]));
+			await db.sortedSetAdd('posts:flagged:banned', flagged.map(() => now), flagged);
+			total += flagged.length;
+		}
+	}, { batch: 500 });
+
+	return total;
+};
 
 BannedWords.add = async function (word) {
 	if (!word || typeof word !== 'string') {
@@ -71,10 +121,20 @@ BannedWords.add = async function (word) {
 	if (!normalizedWord) {
 		throw new Error('[[error:invalid-word]]');
 	}
+
+	// Check if new word, scan old posts if it is
+	const isNew = !await db.isSetMember('banned-words', normalizedWord);
+
 	await db.setAdd('banned-words', normalizedWord);
 	if (!cache.includes(normalizedWord)) {
 		cache.push(normalizedWord);
 	}
+
+	if (isNew) {
+		// Scan all existing posts and flag matches
+		await BannedWords.scanExistingPostsForWord(normalizedWord);
+	}
+
 	pubsub.publish('meta:bannedwords:reload');
 };
 
