@@ -2,10 +2,10 @@
 
 define('quickreply', [
 	'components', 'autocomplete', 'api',
-	'alerts', 'uploadHelpers', 'mousetrap', 'storage', 'hooks',
+	'alerts', 'uploadHelpers', 'mousetrap', 'storage', 'hooks', 'composer/topic-link',
 ], function (
 	components, autocomplete, api,
-	alerts, uploadHelpers, mousetrap, storage, hooks
+	alerts, uploadHelpers, mousetrap, storage, hooks, topicLink
 ) {
 	const QuickReply = {
 		_autocomplete: null,
@@ -61,10 +61,12 @@ define('quickreply', [
 			}
 
 			const replyMsg = components.get('topic/quickreply/text').val();
+			const linkedThreadIds = topicLink.getLinkedTopicIds('quickreply', replyMsg);
 			const replyData = {
 				tid: ajaxify.data.tid,
 				handle: undefined,
 				content: replyMsg,
+				linkedThreadIds: linkedThreadIds.length > 0 ? linkedThreadIds : undefined,
 			};
 			const replyLen = replyMsg.length;
 			if (replyLen < parseInt(config.minimumPostLength, 10)) {

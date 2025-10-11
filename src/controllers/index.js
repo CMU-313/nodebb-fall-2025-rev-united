@@ -23,6 +23,7 @@ Controllers.unread = require('./unread');
 Controllers.recent = require('./recent');
 Controllers.popular = require('./popular');
 Controllers.top = require('./top');
+Controllers.resources = require('./resources');
 Controllers.tags = require('./tags');
 Controllers.search = require('./search');
 Controllers.user = require('./user');
