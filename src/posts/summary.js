@@ -22,12 +22,13 @@ module.exports = function (Posts) {
 		options.escape = options.hasOwnProperty('escape') ? options.escape : false;
 		options.extraFields = options.hasOwnProperty('extraFields') ? options.extraFields : [];
 
-		const fields = ['pid', 'tid', 'toPid', 'url', 'content', 'sourceContent', 'uid', 'timestamp', 'deleted', 'upvotes', 'downvotes', 'replies', 'handle'].concat(options.extraFields);
+		const fields = ['pid', 'tid', 'toPid', 'url', 'content', 'sourceContent', 'uid', 'timestamp', 'deleted', 'upvotes', 'downvotes', 'replies', 'handle', 'linkedThreadIds'].concat(options.extraFields);
 
 		let posts = await Posts.getPostsFields(pids, fields);
 		posts = posts.filter(Boolean);
 		posts = await user.blocks.filter(uid, posts);
 
+		const linkedTidSet = new Set();
 		const uids = _.uniq(posts.map(p => p && p.uid));
 		const tids = _.uniq(posts.map(p => p && p.tid));
 
@@ -63,9 +64,23 @@ module.exports = function (Posts) {
 			if (utils.isNumber(post.pid)) {
 				post.url = `${nconf.get('url')}/post/${post.pid}`;
 			}
+
+			post.linkedThreadIds = parseLinkedThreadIds(post.linkedThreadIds);
+			post.linkedThreadIds.forEach(tid => linkedTidSet.add(tid));
 		});
 
 		posts = posts.filter(post => tidToTopic[post.tid]);
+
+		const linkedTopicsMap = await getLinkedTopicsMap(linkedTidSet);
+		posts.forEach((post) => {
+			if (post.linkedThreadIds.length) {
+				post.linkedTopics = post.linkedThreadIds
+					.map(tid => linkedTopicsMap[tid])
+					.filter(Boolean);
+			} else {
+				post.linkedTopics = [];
+			}
+		});
 
 		posts = await parsePosts(posts, options);
 		const result = await plugins.hooks.fire('filter:post.getPostSummaryByPids', { posts: posts, uid: uid });
@@ -112,6 +127,44 @@ module.exports = function (Posts) {
 			obj[data[i][key]] = data[i];
 		}
 		return obj;
+	}
+
+	function parseLinkedThreadIds(value) {
+		if (!value) {
+			return [];
+		}
+
+		if (Array.isArray(value)) {
+			return value
+				.map(id => parseInt(id, 10))
+				.filter(id => Number.isInteger(id));
+		}
+
+		return String(value)
+			.split(',')
+			.map(id => parseInt(id, 10))
+			.filter(id => Number.isInteger(id));
+	}
+
+	async function getLinkedTopicsMap(linkedTidSet) {
+		if (!linkedTidSet.size) {
+			return {};
+		}
+
+		const linkedTids = Array.from(linkedTidSet);
+		const linkedTopics = await topics.getTopicsFields(linkedTids, ['tid', 'title', 'slug']);
+		const map = {};
+		linkedTopics.forEach((topic) => {
+			if (topic && Number.isInteger(topic.tid)) {
+				map[topic.tid] = {
+					tid: topic.tid,
+					title: topic.title,
+					slug: topic.slug,
+				};
+			}
+		});
+
+		return map;
 	}
 
 	function stripTags(content) {
