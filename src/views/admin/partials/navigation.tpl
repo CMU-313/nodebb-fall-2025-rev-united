@@ -57,6 +57,7 @@
 				<a class="btn btn-ghost btn-sm text-start" target="_top" href="{relative_path}/flags">[[admin/menu:manage/flagged-content]] <i class="fa fa-external-link"></i></a>
 				<a class="btn btn-ghost btn-sm text-start" target="_top" href="{relative_path}/post-queue">[[admin/menu:manage/post-queue]] <i class="fa fa-external-link"></i></a>
 				<a class="btn btn-ghost btn-sm text-start" target="_top" href="{relative_path}/ip-blacklist">[[admin/menu:manage/ip-blacklist]] <i class="fa fa-external-link"></i></a>
+				<a class="btn btn-ghost btn-sm text-start" target="_top" href="{relative_path}/banned-review">[[admin/menu:manage/banned-review]] <i class="fa fa-external-link"></i></a>
 				{{{ end }}}
 			</div>
 		</div>
