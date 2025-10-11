@@ -45,7 +45,7 @@
 				<div class="text-sm text-muted">
 					[[banned-review:matched-words]]:
 					{{{ each ./matches }}}
-					<span class="badge text-bg-secondary me-1">{./matches}</span>
+					<span class="badge text-bg-secondary me-1">{@value}</span>
 					{{{ end }}}
 				</div>
 				{{{ end }}}

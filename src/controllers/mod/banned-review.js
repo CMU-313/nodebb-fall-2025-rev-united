@@ -36,9 +36,13 @@ module.exports = async function bannedReview(req, res, next) {
 			db.getObjects(pids.map(pid => `post:${pid}:banned:matches`)),
 		]);
 
-		const items = summaries.map((post, idx) => ({
+		// Align matches by pid to avoid index mismatch after summary filtering
+		const matchesByPid = {};
+		pids.forEach((pid, i) => { matchesByPid[pid] = matchObjs[i] || {}; });
+		
+		const items = summaries.map(post => ({
 			post,
-			matches: Object.keys(matchObjs[idx] || {}),
+			matches: Object.keys(matchesByPid[post.pid] || {}),
 		}));
 
 		const pageCount = Math.max(1, Math.ceil(count / perPage));
