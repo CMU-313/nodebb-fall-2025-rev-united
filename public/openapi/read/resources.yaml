@@ -46,4 +46,24 @@ get:
                       required:
                         - text
                       additionalProperties: true
+                  canAddResource:
+                    type: boolean
+                    description: Indicates whether the current user has permission to add new resources
+                  canEditResource:
+                    type: boolean
+                    description: Indicates whether the current user has permission to edit existing resources
+                  canDeleteResource:
+                    type: boolean
+                    description: Indicates whether the current user has permission to delete resources
+                  error:
+                    type: string
+                    nullable: true
+                    description: Localised error message surfaced when an API delete fails
+                required:
+                  - resources
+                  - title
+                  - breadcrumbs
+                  - canAddResource
+                  - canEditResource
+                  - canDeleteResource
               - $ref: '../components/schemas/CommonProps.yaml#/CommonProps'

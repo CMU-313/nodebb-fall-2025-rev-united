@@ -37,6 +37,8 @@ _mounts.main = (app, middleware, controllers) => {
 	setupPageRoute(app, '/outgoing', [], controllers.outgoing);
 	setupPageRoute(app, '/search', [], controllers.search.search);
 	setupPageRoute(app, '/resources', [], controllers.resources.get);
+	setupPageRoute(app, '/resources/new', [middleware.ensureLoggedIn], controllers.resources.getCreate);
+	setupPageRoute(app, '/resources/:resourceId/edit', [middleware.ensureLoggedIn], controllers.resources.getEdit);
 	setupPageRoute(app, '/reset/:code?', [middleware.delayLoading], controllers.reset);
 	setupPageRoute(app, '/tos', [], controllers.termsOfUse);
 
@@ -44,6 +46,9 @@ _mounts.main = (app, middleware, controllers) => {
 	app.post('/email/unsubscribe/:token', controllers.accounts.settings.unsubscribePost);
 
 	app.post('/compose', middleware.applyCSRF, controllers.composer.post);
+	app.post('/resources/new', middleware.ensureLoggedIn, middleware.applyCSRF, helpers.tryRoute(controllers.resources.postCreate));
+	app.post('/resources/:resourceId/edit', middleware.ensureLoggedIn, middleware.applyCSRF, helpers.tryRoute(controllers.resources.postEdit));
+	app.post('/resources/:resourceId/delete', middleware.ensureLoggedIn, middleware.applyCSRF, helpers.tryRoute(controllers.resources.postDelete));
 };
 
 _mounts.mod = (app, middleware, controllers) => {
