@@ -46,4 +46,7 @@ get:
                       required:
                         - text
                       additionalProperties: true
+                  canAddResource:
+                    type: boolean
+                    description: Indicates whether the current user has permission to add new resources
               - $ref: '../components/schemas/CommonProps.yaml#/CommonProps'

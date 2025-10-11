@@ -1,0 +1,49 @@
+get:
+  tags:
+    - meta
+  summary: Get resource creation form context
+  description: Returns the contextual data required to render the Add Resource form.
+  responses:
+    "200":
+      description: Resource creation context.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - type: object
+                properties:
+                  title:
+                    type: string
+                  breadcrumbs:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        text:
+                          type: string
+                        url:
+                          type: string
+                        icon:
+                          type: string
+                      required:
+                        - text
+                      additionalProperties: true
+                  values:
+                    type: object
+                    description: Prefilled values for the Add Resource form
+                    properties:
+                      name:
+                        type: string
+                        description: Resource name entered by the user
+                      description:
+                        type: string
+                        description: Resource description entered by the user
+                      url:
+                        type: string
+                        description: Resource URL entered by the user
+                    additionalProperties: false
+                  error:
+                    type: string
+                    nullable: true
+                    description: Localised error message returned when validation fails
+              - $ref: '../components/schemas/CommonProps.yaml#/CommonProps'

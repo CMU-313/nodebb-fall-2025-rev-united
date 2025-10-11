@@ -156,5 +156,6 @@
  "resources-name": "Name",
  "resources-description": "Description",
  "resources-link": "Link",
- "resources-open-link": "View"
+ "resources-open-link": "View",
+ "resources-add": "Add Resource"
 }
