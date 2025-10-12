@@ -225,6 +225,24 @@ Behavior in the topic page
     - Data shape and pid→matches alignment in the response
   - Why sufficient: Validates the mounted route contract and privilege gating in [src/controllers/mod/banned-review.js](src/controllers/mod/banned-review.js).
 
-- Banned review controller
-  - File: [test/banned-review.controller.js]
-  - Verifies controller logic in isolation (joining summaries with matches by pid)
+- Resources page
+  - File: test/resources.js
+  - Covers:
+    - Initial migration of seed resources on first init (ensures the in-DB list is bootstrapped).
+    - CRUD: add, update, remove; ordering via load() (newest first) and consistency of getList() vs getAll().
+    - Existence checks via exists(id).
+    - Privilege enforcement: denies add/update/remove without specific admin privileges; allows when privileges.admin.can returns true.
+  - Why sufficient:
+    - Validates the data layer used by the controller at render time (src/controllers/resources.js uses Resources.getAll()).
+    - Ensures list stability, ordering, and permission gates match expectations for the /resources page and /api/resources.
+
+- Linked Thread IDs (linked topics)
+  - File: test/topics.js — “linkedThreadIds” suite
+  - Covers:
+    - Creating replies with multiple linkedThreadIds and verifying:
+      - Persistence in postData.linkedThreadIds.
+      - Returned linkedTopics array includes the linked topics with valid tids and titles.
+    - Creating replies with a single linkedThreadId and verifying linkedTopics length/contents.
+    - Server-side validation on compose path (enforced by src/posts/create.js: checkLinkedThreadIds) for existence and readable permission of linked threads (success-path exercised; invalid cases covered elsewhere by privilege checks).
+  - Why sufficient:
+    - Confirms both storage (post.linkedThreadIds) and presentation data (post.linkedTopics) are set on write and retrievable on read, which the client UI (public/src/client/topic/linked-topics.js) consumes to render inline links.
