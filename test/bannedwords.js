@@ -54,6 +54,74 @@ describe('BannedWords Data Layer', () => {
 		await BannedWords.remove('c++');
 	});
 
+	it('should find nothing for empty/whitespace text', () => {
+		const hits = BannedWords.findMatches('   ');
+		assert.deepStrictEqual(hits, []);
+	});
+
+	it('should match words in topic titles as well as content during retro scan', async () => {
+		// Arrange
+		const tid = '910001';
+		const pid = '810001';
+
+		await Promise.all([
+			db.delete(`topic:${tid}`),
+			db.delete(`post:${pid}`),
+			db.sortedSetRemove('posts:pid', pid),
+			db.delete(`post:${pid}:banned:matches`),
+			db.sortedSetRemove('posts:flagged:banned', pid),
+		]);
+
+		// Title only contains soon-to-be-banned word
+		await db.setObject(`topic:${tid}`, { tid, title: 'Title has retrotitle', mainPid: pid });
+		await db.setObject(`post:${pid}`, { pid, tid, content: 'Clean body' });
+		await db.sortedSetAdd('posts:pid', Date.now(), pid);
+
+		// Act
+		await BannedWords.add('retrotitle');
+
+		// Assert
+		const flagged = await db.getSortedSetRange('posts:flagged:banned', 0, -1);
+		assert(flagged.includes(pid));
+		const matches = await db.getObject(`post:${pid}:banned:matches`);
+		assert(matches && matches.retrotitle);
+	});
+
+	it('should not re-scan if word already exists', async () => {
+		// Arrange a post that contains "dupeword"
+		const tid = '910010';
+		const pid = '810010';
+		await Promise.all([
+			db.delete(`topic:${tid}`),
+			db.delete(`post:${pid}`),
+			db.sortedSetRemove('posts:pid', pid),
+			db.delete(`post:${pid}:banned:matches`),
+			db.sortedSetRemove('posts:flagged:banned', pid),
+		]);
+		await db.setObject(`topic:${tid}`, { tid, title: 'Something', mainPid: pid });
+		await db.setObject(`post:${pid}`, { pid, tid, content: 'dupeword inside content' });
+		await db.sortedSetAdd('posts:pid', Date.now(), pid);
+
+		// First add triggers scan
+		await BannedWords.add('dupeword');
+		let flagged = await db.getSortedSetRange('posts:flagged:banned', 0, -1);
+		assert(flagged.includes(pid));
+
+		// Cleanup flagged set and matches, then re-add same word — should NOT reflag
+		await db.sortedSetRemove('posts:flagged:banned', pid);
+		await db.delete(`post:${pid}:banned:matches`);
+		await BannedWords.add('dupeword');
+
+		flagged = await db.getSortedSetRange('posts:flagged:banned', 0, -1);
+		assert(!flagged.includes(pid), 'Duplicate add should not re-scan/flag');
+	});
+
+	it('findMatches should be case-insensitive and de-duplicate', async () => {
+		await BannedWords.add('MiXeDcAsE');
+		const hits = BannedWords.findMatches('mixedcase appears twice: mixedcase');
+		assert.deepStrictEqual(hits, ['MiXeDcAsE']);
+	});
+
 	it('should reject empty words after trimming', async () => {
 		await assert.rejects(BannedWords.add('   '), /invalid-word/);
 	});

@@ -1865,6 +1865,54 @@ describe('Controllers', () => {
 		});
 	});
 
+	describe('banned content review', () => {
+		let adminJar;
+
+		before(async () => {
+			({ jar: adminJar } = await helpers.loginUser('admin', 'barbar'));
+		});
+
+		it('should 401 for guests', async () => {
+			const { response } = await request.get(`${nconf.get('url')}/api/banned-review`);
+			assert.strictEqual(response.statusCode, 401);
+		});
+
+		it('should 403 for regular user', async () => {
+			const { jar } = await helpers.loginUser('foo', 'barbar');
+			const { response } = await request.get(`${nconf.get('url')}/api/banned-review`, { jar });
+			assert.strictEqual(response.statusCode, 403);
+		});
+
+		it('should list flagged posts for admin', async () => {
+			// Seed a flagged post using existing topic/post vars from this suite
+			// (tid, pid, cid are set in the top-level before())
+			// Ensure clean state for this pid in flagged sets
+			await Promise.all([
+				db.sortedSetRemove('posts:flagged:banned', pid),
+				db.delete(`post:${pid}:banned:matches`),
+			]);
+
+			// Mark the existing pid as flagged with two matched words
+			const now = Date.now();
+			await db.sortedSetAdd('posts:flagged:banned', now, pid);
+			await db.setObject(`post:${pid}:banned:matches`, { retroflag: now, testword: now });
+
+			const { response, body } = await request.get(`${nconf.get('url')}/api/banned-review`, { jar: adminJar });
+			assert.strictEqual(response.statusCode, 200);
+			assert(Array.isArray(body.posts));
+
+			const row = body.posts.find((p) => String(p.post && p.post.pid) === String(pid));
+			assert(row, 'expected current pid to be returned');
+			assert.deepStrictEqual(new Set(row.matches), new Set(['retroflag', 'testword']));
+
+			// Cleanup
+			await Promise.all([
+				db.sortedSetRemove('posts:flagged:banned', pid),
+				db.delete(`post:${pid}:banned:matches`),
+			]);
+		});
+	});
+
 	describe('test routes', () => {
 		if (process.env.NODE_ENV === 'development') {
 			it('should load debug route', async () => {

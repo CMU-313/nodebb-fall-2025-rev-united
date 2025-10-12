@@ -117,8 +117,10 @@ BannedWords.add = async function (word) {
 	if (!word || typeof word !== 'string') {
 		throw new Error('[[error:invalid-word]]');
 	}
-	const normalizedWord = word.toLowerCase().trim();
-	if (!normalizedWord) {
+
+	const originalWord = String(word).trim();
+	const normalizedWord = originalWord.toLowerCase();
+	if (!originalWord) {
 		throw new Error('[[error:invalid-word]]');
 	}
 
@@ -126,13 +128,13 @@ BannedWords.add = async function (word) {
 	const isNew = !await db.isSetMember('banned-words', normalizedWord);
 
 	await db.setAdd('banned-words', normalizedWord);
-	if (!cache.includes(normalizedWord)) {
-		cache.push(normalizedWord);
-	}
 
 	if (isNew) {
+		cache.push(originalWord);
 		// Scan all existing posts and flag matches
-		await BannedWords.scanExistingPostsForWord(normalizedWord);
+		if (typeof BannedWords.scanExistingPostsForWord === 'function') {
+			await BannedWords.scanExistingPostsForWord(normalizedWord);
+		}
 	}
 
 	pubsub.publish('meta:bannedwords:reload');
