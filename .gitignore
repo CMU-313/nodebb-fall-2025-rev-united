@@ -76,5 +76,6 @@ test.sh
 .docker/**
 !**/.gitkeep
 
-# stryker temp files
+# stryker temp files and reports
 .stryker-tmp
+reports/
