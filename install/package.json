@@ -176,7 +176,7 @@
         "mockdate": "3.0.5",
         "nyc": "17.1.0",
         "smtp-server": "3.13.6",
-         "standard": "^17.1.2"
+        "standard": "^17.1.2"
     },
     "optionalDependencies": {
         "sass-embedded": "1.88.0"
