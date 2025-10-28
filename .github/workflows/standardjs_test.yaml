@@ -38,24 +38,25 @@ jobs:
         with:
           useLockFile: false
 
-      - name: Run StandardJS with threshold (no file)
+      - name: Run StandardJS with threshold (no file, no env)
         run: |
-          # Capture output; if parsing fails, fallback to []
-          OUTPUT=$(npm run -s standard -- --reporter=standard-json 2>/dev/null || true)
+          npm run -s standard -- --reporter=standard-json 2>/dev/null || true | node -e "
+          const fs = require('fs');
 
-          node -e "
-          const out = process.env.OUTPUT?.trim() || '[]';
-          let data;
-          try { data = JSON.parse(out); } catch { data = []; }
+          const txt = (() => { try { return fs.readFileSync(0, 'utf8'); } catch { return ''; } })().trim() || '[]';
+          let data; try { data = JSON.parse(txt); } catch { data = []; }
 
-          let errors = 0;
+          let errors = 0, warnings = 0;
           for (const file of data) {
             for (const m of (file.messages || [])) {
               if (m.severity === 2) errors++;
+              else if (m.severity === 1) warnings++;
             }
           }
 
           console.log('StandardJS errors:', errors);
+          console.log('StandardJS warnings:', warnings);
+
           const LIMIT = 1000;
           if (errors > LIMIT) {
             console.error(\`Too many errors: \${errors} > \${LIMIT}\`);
@@ -63,5 +64,3 @@ jobs:
           } else {
             console.log(\`Within threshold: \${errors} ≤ \${LIMIT}\`);
           }"
-        env:
-          OUTPUT: ${{ steps.lint.outputs.output || '' }}
