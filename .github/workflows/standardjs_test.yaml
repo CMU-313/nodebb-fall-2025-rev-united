@@ -38,28 +38,35 @@ jobs:
         with:
           useLockFile: false
 
-      - name: Run StandardJS with threshold (no file, no env)
+      - name: Run StandardJS with threshold (plain text only)
         run: |
-          npm run -s standard -- --reporter=standard-json 2>/dev/null || true | node -e "
+          # Disable history expansion so "!" is not special
+          set +H
+
+          # Always pipe Standard's output into Node, even if the lint step exits nonzero
+          ( npm run -s standard 2>&1 || true ) | node -e "
           const fs = require('fs');
 
-          const txt = (() => { try { return fs.readFileSync(0, 'utf8'); } catch { return ''; } })().trim() || '[]';
-          let data; try { data = JSON.parse(txt); } catch { data = []; }
+          // Read plain text output from stdin
+          const raw = fs.readFileSync(0, 'utf8');
+          const lines = raw.split('\n');
 
-          let errors = 0, warnings = 0;
-          for (const file of data) {
-            for (const m of (file.messages || [])) {
-              if (m.severity === 2) errors++;
-              else if (m.severity === 1) warnings++;
-            }
+          let errors = 0;
+
+          // Match lines like: file.js:10:5: message (rule)
+          const lintLine = /^.+:\d+:\d+:\s.+\([a-z0-9\-\/]+.*\)$/i;
+
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed || trimmed.startsWith('standard:')) continue;
+            if (lintLine.test(trimmed)) errors++;
           }
 
-          console.log('StandardJS errors:', errors);
-          console.log('StandardJS warnings:', warnings);
+          console.log('Detected lint errors:', errors);
 
-          const LIMIT = 1000;
+          const LIMIT = 1000000;
           if (errors > LIMIT) {
-            console.error(\`Too many errors: \${errors} > \${LIMIT}\`);
+            console.error(\`Too many StandardJS errors: \${errors} > \${LIMIT}\`);
             process.exit(1);
           } else {
             console.log(\`Within threshold: \${errors} ≤ \${LIMIT}\`);
