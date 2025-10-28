@@ -15,6 +15,7 @@ on:
 defaults:
   run:
     shell: bash
+    working-directory: install
 
 permissions:
   contents: read
