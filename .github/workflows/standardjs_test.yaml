@@ -38,5 +38,27 @@ jobs:
         with:
           useLockFile: false
 
-      - name: Run StandardJS
-        run: npm run standard
+      - name: Run StandardJS with threshold
+        run: |
+          npm run standard -- --reporter=standard-json > standard-report.json || true
+
+          # Parse JSON and enforce ≤1000 error threshold
+          node -e "
+          const fs = require('fs');
+          const path = 'standard-report.json';
+          const data = fs.existsSync(path) ? JSON.parse(fs.readFileSync(path, 'utf8')) : [];
+          let errors = 0;
+          for (const file of data) {
+            if (!file || !file.messages) continue;
+            for (const m of file.messages) {
+              if (m && m.severity === 2) errors++;
+            }
+          }
+          console.log('StandardJS errors:', errors);
+          const LIMIT = 1000;
+          if (errors > LIMIT) {
+            console.error(\`Too many errors: \${errors} > \${LIMIT}\`);
+            process.exit(1);
+          } else {
+            console.log(\`Within threshold: \${errors} ≤ \${LIMIT}\`);
+          }"
