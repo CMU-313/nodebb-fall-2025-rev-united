@@ -15,7 +15,6 @@ on:
 defaults:
   run:
     shell: bash
-    working-directory: install
 
 permissions:
   contents: read
@@ -25,18 +24,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - run: cp install/package.json package.json
+
+      - name: Install Node
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: install/package-lock.json
 
-      - name: Install dependencies
-        run: npm install
+      - name: NPM Install
+        uses: bahmutov/npm-install@v1
+        with:
+          useLockFile: false
 
       - name: Run StandardJS
         run: npm run standard
