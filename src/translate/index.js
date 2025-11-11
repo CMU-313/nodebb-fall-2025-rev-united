@@ -8,6 +8,8 @@ const translatorApi = module.exports;
 //     return [data.is_english, data.translated_content];
 // };
 
+// Test comments
+
 translatorApi.translate = async function (postData) {
 	const TRANSLATOR_API = 'http://host.docker.internal:5000';
 	try {
