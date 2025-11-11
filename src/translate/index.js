@@ -1,7 +1,4 @@
-
 /* eslint-disable strict */
-//var request = require('request');
-
 const translatorApi = module.exports;
 
 // translatorApi.translate = async function (postData) {
